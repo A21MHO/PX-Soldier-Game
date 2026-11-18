@@ -1,290 +1,1607 @@
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>보직 이동 PX병</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>보직 이동 PX병 - 3D 군마트 계산 시뮬레이터</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
-body{margin:0;overflow:hidden;background:#0b0b0f;font-family:'Malgun Gothic',sans-serif;user-select:none;}
-#cover-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.8)),url('15925.png') no-repeat center center/cover;display:flex;flex-direction:column;justify-content:flex-end;padding:50px;box-sizing:border-box;z-index:100;}
-.cover-title-area{margin-bottom:40px;}
-.cover-subtitle{color:#a0a0a0;font-size:1.2rem;font-weight:bold;margin-bottom:5px;text-shadow:1px 1px 2px rgba(0,0,0,0.8);}
-.cover-title{color:#e2d8c3;font-size:4rem;font-weight:900;text-shadow:3px 3px 6px rgba(0,0,0,0.9);letter-spacing:2px;}
-.cover-menu{display:flex;flex-direction:column;gap:15px;width:320px;align-self:flex-end;}
-.menu-btn{background:linear-gradient(135deg,#3a4a3a,#232d23);color:#e2d8c3;border:2px solid #556b2f;padding:15px 25px;font-size:1.2rem;font-weight:bold;text-align:left;cursor:pointer;border-radius:4px;box-shadow:0 4px 10px rgba(0,0,0,0.6);display:flex;align-items:center;gap:15px;transition:all 0.2s;}
-.menu-btn:hover{background:linear-gradient(135deg,#4d634d,#2e3b2e);transform:translateX(-5px);border-color:#8fbc8f;}
-#game-container{position:absolute;top:0;left:0;width:100%;height:100%;display:none;z-index:10;}
-#ui-hud{position:absolute;top:20px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:20;}
-.hud-box{background:rgba(20,20,25,0.85);border:2px solid #556b2f;padding:12px 25px;border-radius:8px;color:#fff;font-size:1.3rem;font-weight:bold;box-shadow:0 4px 15px rgba(0,0,0,0.5);}
-#intro-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:none;flex-direction:column;justify-content:center;align-items:center;z-index:50;color:#fff;text-align:center;}
-.intro-text{font-size:2rem;font-weight:bold;margin-bottom:20px;opacity:0;transition:opacity 1s ease;}
-#interaction-panel{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:none;flex-direction:column;align-items:center;gap:15px;background:rgba(25,25,35,0.95);border:3px solid #4a5d4e;padding:25px;border-radius:12px;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,0.8);width:600px;}
-.panel-title{color:#e2d8c3;font-size:1.2rem;font-weight:bold;}
-.item-scan-box{display:flex;gap:10px;min-height:80px;align-items:center;justify-content:center;}
-.scannable-item{background:#2d3748;border:2px solid #718096;padding:10px 15px;border-radius:6px;color:#fff;cursor:pointer;font-weight:bold;transition:all 0.2s;}
-.scannable-item.scanned{background:#2f855a;border-color:#48bb78;text-decoration:line-through;opacity:0.6;}
-.change-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;}
-.change-btn{background:#3182ce;color:#white;border:none;padding:12px;font-size:1.1rem;font-weight:bold;border-radius:6px;cursor:pointer;transition:background 0.2s;}
-.change-btn:hover{background:#2b6cb0;}
-.modal{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#181822;border:3px solid #556b2f;width:600px;max-height:80vh;padding:30px;border-radius:10px;display:none;z-index:200;box-shadow:0 10px 40px rgba(0,0,0,0.9);color:#e2d8c3;box-sizing:border-box;overflow-y:auto;}
-.modal h2{margin-top:0;border-bottom:2px solid #556b2f;padding-bottom:10px;}
-.close-btn{background:#c53030;color:#fff;border:none;padding:8px 15px;font-weight:bold;border-radius:4px;cursor:pointer;float:right;}
-.rank-row{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #2d3748;}
-.rank-row.my-rank{background:rgba(49,130,206,0.3);border:1px solid #3182ce;font-weight:bold;}
+/* 전역 폰트 및 드래그 방지 설정 */
+* {
+box-sizing: border-box;
+user-select: none;
+-webkit-user-select: none;
+-webkit-tap-highlight-color: transparent;
+}
+body {
+margin: 0;
+padding: 0;
+overflow: hidden;
+background-color: #0d110e;
+font-family: 'Noto Sans KR', sans-serif;
+color: #e5e7eb;
+}
+.font-military {
+font-family: 'Black Han Sans', sans-serif;
+}
+.font-sub {
+font-family: 'Do Hyeon', sans-serif;
+}
+
+/* 표지 그레인지 & 노이즈 오버레이 (첨부 이미지 분위기 재현) */
+.grunge-overlay {
+background-image: 
+radial-gradient(circle at 50% 40%, rgba(30, 40, 32, 0.15) 0%, rgba(5, 8, 6, 0.88) 100%),
+repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px);
+pointer-events: none;
+}
+
+/* 첨부 이미지 스타일의 군용 스텐실 버튼 */
+.px-menu-btn {
+position: relative;
+background: linear-gradient(180deg, #4b533c 0%, #2f3524 100%);
+border: 2px solid #788265;
+box-shadow: 0 6px 15px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0 50%);
+transition: all 0.15s ease;
+cursor: pointer;
+}
+.px-menu-btn:hover {
+background: linear-gradient(180deg, #5d674b 0%, #3c442e 100%);
+border-color: #a3b18a;
+transform: scale(1.03);
+}
+.px-menu-btn:active {
+transform: scale(0.97);
+}
+
+/* 표지 로고 텍스트 질감 효과 */
+.stencil-title {
+color: #e2e4d8;
+text-shadow: 0 4px 12px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 1);
+letter-spacing: -0.03em;
+}
+
+/* 거스름돈 화폐 버튼 3D 효과 */
+.money-btn {
+transition: transform 0.08s ease, box-shadow 0.08s ease;
+box-shadow: 0 5px 0 #1e293b, 0 8px 15px rgba(0,0,0,0.6);
+}
+.money-btn:active {
+transform: translateY(4px);
+box-shadow: 0 1px 0 #1e293b, 0 3px 6px rgba(0,0,0,0.6);
+}
+
+/* 화면 흔들림 & 플래시 효과 */
+@keyframes shakeScreen {
+0%, 100% { transform: translate(0, 0); }
+20% { transform: translate(-10px, 5px); }
+40% { transform: translate(10px, -5px); }
+60% { transform: translate(-7px, -3px); }
+80% { transform: translate(7px, 3px); }
+}
+.shake-active {
+animation: shakeScreen 0.35s ease-in-out;
+}
+
+@keyframes floatScore {
+0% { transform: translateY(0) scale(0.8); opacity: 1; }
+100% { transform: translateY(-60px) scale(1.2); opacity: 0; }
+}
+.float-anim {
+position: fixed;
+pointer-events: none;
+z-index: 60;
+animation: floatScore 0.8s ease-out forwards;
+}
+
+/* 커스텀 스크롤바 */
+::-webkit-scrollbar {
+width: 6px;
+}
+::-webkit-scrollbar-track {
+background: #1a2018;
+}
+::-webkit-scrollbar-thumb {
+background: #4b533c;
+border-radius: 3px;
+}
 </style>
 </head>
-<body>
-<div id="cover-screen">
-<div class="cover-title-area">
-<div class="cover-subtitle">보직 이동</div>
-<div class="cover-title">PX병</div>
+<body class="w-screen h-screen relative">
+
+<!-- 3D 렌더링 캔버스 컨테이너 -->
+<div id="canvas-container" class="fixed inset-0 w-full h-full z-0"></div>
+
+<!-- 화면 반짝임 오버레이 -->
+<div id="flash-overlay" class="fixed inset-0 pointer-events-none opacity-0 transition-opacity duration-200 z-40"></div>
+
+<!-- =========================================================
+     1. 표지 화면 (첨부 이미지 레이아웃 및 테마 완벽 구현)
+========================================================= -->
+<div id="cover-screen" class="fixed inset-0 z-20 flex flex-col justify-between p-6 sm:p-10 grunge-overlay">
+<!-- 상단 상태 표시 (사운드 토글) -->
+<div class="flex justify-between items-start w-full max-w-4xl mx-auto">
+<div class="bg-black/60 border border-stone-600/60 px-3 py-1.5 rounded text-xs sm:text-sm text-stone-300 font-sub tracking-wider">
+제 00보병사단 충성마트 (PX)
 </div>
-<div class="cover-menu">
-<button class="menu-btn" onclick="startIntro()">▶ 근무 시작</button>
-<button class="menu-btn" onclick="openModal('manual-modal')">📖 근무 매뉴얼</button>
-<button class="menu-btn" onclick="openModal('rank-modal')">🏆 기수 서열표</button>
+<button id="sound-toggle-btn" class="bg-black/70 hover:bg-stone-800 border border-stone-500 text-stone-200 px-3 py-1.5 rounded text-xs sm:text-sm font-bold flex items-center gap-1.5 cursor-pointer">
+<span id="sound-icon">🔊</span> <span id="sound-label">효과음 ON</span>
+</button>
+</div>
+
+<!-- 중앙 및 하단 타이틀 + 우측 메뉴 버튼 배치 (표지 이미지 구도 반영) -->
+<div class="w-full max-w-4xl mx-auto my-auto flex flex-col md:flex-row items-center md:items-end justify-between gap-8 pt-24 sm:pt-32">
+<!-- 좌측 하단 타이틀 로고 -->
+<div class="text-left self-start md:self-end">
+<p class="font-military text-2xl sm:text-4xl text-stone-200 tracking-tight mb-1 drop-shadow-[0_3px_6px_rgba(0,0,0,0.95)]">
+보직 이동
+</p>
+<h1 class="font-military text-7xl sm:text-9xl stencil-title leading-none">
+PX병
+</h1>
+<p class="text-xs sm:text-sm text-stone-400 mt-3 font-medium tracking-wide bg-black/50 inline-block px-2.5 py-1 rounded">
+※ 선임들의 눈초리를 뚫고 빛의 속도로 계산하라!
+</p>
+</div>
+
+<!-- 우측 메뉴 버튼 3종 (표지 이미지와 동일한 디자인 & 명칭) -->
+<div class="w-full max-w-[270px] sm:max-w-[300px] flex flex-col gap-3.5 self-end">
+<button id="btn-start-duty" class="px-menu-btn w-full py-3.5 px-6 flex items-center justify-center gap-3 text-stone-100">
+<svg class="w-6 h-6 text-stone-200 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+<span class="font-sub text-2xl sm:text-3xl tracking-wider">근무 시작</span>
+</button>
+
+<button id="btn-open-manual" class="px-menu-btn w-full py-3.5 px-6 flex items-center justify-center gap-3 text-stone-100">
+<svg class="w-6 h-6 text-stone-200 fill-current" viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>
+<span class="font-sub text-2xl sm:text-3xl tracking-wider">근무 매뉴얼</span>
+</button>
+
+<button id="btn-open-rank" class="px-menu-btn w-full py-3.5 px-6 flex items-center justify-center gap-3 text-stone-100">
+<svg class="w-6 h-6 text-stone-200 fill-current" viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/></svg>
+<span class="font-sub text-2xl sm:text-3xl tracking-wider">기수 서열표</span>
+</button>
 </div>
 </div>
-<div id="intro-overlay">
-<div id="intro-msg-1" class="intro-text">주말 오전, 지옥의 PX 오픈 직전...</div>
-<div id="intro-msg-2" class="intro-text">복도 끝에서 선임들의 군화 소리가 들려온다.</div>
-<div id="intro-msg-3" class="intro-text">정신 바짝 차려라, 근무 시작한다!</div>
 </div>
-<div id="game-container"></div>
-<div id="ui-hud">
-<div class="hud-box" id="hud-score">점수: 0점</div>
-<div class="hud-box" id="hud-combo">콤보: 0 COMBO</div>
-<div class="hud-box" id="hud-timer">남은 시간: 30.0초</div>
+
+<!-- =========================================================
+     2. 인트로 컷신 오버레이 (약 10초 내외, 얼굴 없는 캐릭터 연출)
+========================================================= -->
+<div id="intro-overlay" class="hidden fixed inset-0 z-30 flex flex-col justify-between p-6 sm:p-10 pointer-events-auto bg-gradient-to-t from-black/85 via-transparent to-black/60">
+<div class="flex justify-between items-center w-full max-w-3xl mx-auto">
+<span class="px-3 py-1 bg-red-900/80 border border-red-500 text-red-200 text-xs font-bold rounded tracking-widest animate-pulse">
+● REC | PX 보직 인수인계 중
+</span>
+<button id="btn-skip-intro" class="px-4 py-1.5 bg-stone-800/90 hover:bg-stone-700 border border-stone-500 text-stone-200 text-xs sm:text-sm font-bold rounded cursor-pointer">
+스킵하기 ⏭
+</button>
 </div>
-<div id="interaction-panel">
-<div class="panel-title" id="panel-instruction">1단계: 컨베이어 물건을 드래그(클릭)하여 바코드를 찍으세요!</div>
-<div class="item-scan-box" id="item-scan-box"></div>
-<div id="change-calc-area" style="display:none;width:100%;">
-<div style="margin-bottom:10px;text-align:center;font-weight:bold;" id="calc-status">지불 금액: <span id="pay-amount">10,000원</span> / 거스름돈: <span id="change-target">0원</span></div>
-<div style="margin-bottom:10px;text-align:center;color:#63b3ed;" id="current-given">투입한 잔돈: <span id="current-given-val">0원</span></div>
-<div class="change-buttons">
-<button class="change-btn" onclick="addChange(5000)">5,000원</button>
-<button class="change-btn" onclick="addChange(1000)">1,000원</button>
-<button class="change-btn" onclick="addChange(500)">500원</button>
-<button class="change-btn" onclick="addChange(100)">100원</button>
+
+<!-- 하단 자막 창 -->
+<div class="w-full max-w-3xl mx-auto bg-stone-950/95 border-2 border-olive-600 border-stone-600 rounded-xl p-5 sm:p-6 shadow-2xl">
+<div class="flex items-center gap-2 mb-2">
+<span id="intro-speaker" class="px-2.5 py-0.5 bg-amber-700 text-amber-100 text-xs sm:text-sm font-bold rounded">
+전임 PX병 (병장)
+</span>
+<span id="intro-step-indicator" class="text-xs text-stone-400">1 / 4</span>
+</div>
+<p id="intro-dialogue" class="text-base sm:text-xl text-stone-100 font-medium leading-relaxed min-h-[3.5rem]">
+"야, 신병. 오늘부터 네가 이 충성마트 메인 계산병이다."
+</p>
+<div class="w-full bg-stone-800 h-1.5 rounded-full mt-4 overflow-hidden">
+<div id="intro-progress-bar" class="bg-amber-500 h-full w-0 transition-all duration-100"></div>
 </div>
 </div>
 </div>
-<div id="manual-modal" class="modal">
-<button class="close-btn" onclick="closeModal('manual-modal')">닫기</px>
-<h2>근무 매뉴얼</h2>
-<p>1. <strong>바코드 스캔:</strong> 왼쪽 컨베이어에서 밀려오는 1~4개의 패러디 물건들을 순서대로 클릭(스캔)하세요.</p>
-<p>2. <strong>거스름돈 계산:</strong> 계산기에 총금액이 뜨면 군복 상체가 내미는 돈을 확인하고 정확한 거스름돈 버튼을 조합해 누르세요.</p>
-<p>3. <strong>콤보 및 보너스:</strong> 정답을 맞힐 때마다 콤보가 쌓이며 점수가 급상승하고, <strong>5콤보마다 제한 시간이 +1.5초</strong> 추가됩니다!</p>
+
+<!-- =========================================================
+     3. 인게임 플레이 HUD 오버레이 (3D 카운터 위 인터페이스)
+========================================================= -->
+<div id="game-hud" class="hidden fixed inset-0 z-10 pointer-events-none flex flex-col justify-between p-3 sm:p-5">
+<!-- 상단 상태바 (점수, 타이머, 콤보) -->
+<div class="w-full max-w-4xl mx-auto flex flex-col gap-2 pointer-events-auto">
+<div class="flex items-center justify-between bg-stone-950/85 backdrop-blur-md border border-stone-600 rounded-xl px-4 py-2.5 shadow-lg">
+<!-- 콤보 & 처리 인원 -->
+<div class="flex items-center gap-3">
+<div>
+<div class="text-[11px] text-stone-400 font-bold">처리 완료</div>
+<div class="font-sub text-xl sm:text-2xl text-emerald-400"><span id="hud-count">0</span>명</div>
 </div>
-<div id="rank-modal" class="modal">
-<button class="close-btn" onclick="closeModal('rank-modal')">닫기</button>
-<h2>기수 서열표 (순위표)</h2>
-<div id="rank-list-container"></div>
+<div id="hud-combo-badge" class="hidden px-3 py-1 rounded-lg bg-gradient-to-r from-amber-600 to-red-600 text-white font-sub text-lg sm:text-xl shadow-md">
+<span id="hud-combo">0</span>연속 완벽! 🔥
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</div>
+
+<!-- 중앙 단계 안내 배지 -->
+<div id="phase-guide-badge" class="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full bg-stone-800 border border-amber-500/60 text-amber-300 text-sm font-bold">
+📦 컨베이어 물건을 바코드 스캐너로 드래그하세요!
+</div>
+
+<!-- 점수 표시 -->
+<div class="text-right">
+<div class="text-[11px] text-stone-400 font-bold">근무 평점</div>
+<div id="hud-score" class="font-sub text-2xl sm:text-3xl text-amber-400">0</div>
+</div>
+</div>
+
+<!-- 제한시간 게이지 바 -->
+<div class="w-full bg-stone-950/90 border border-stone-700 rounded-full h-3.5 p-0.5 relative overflow-hidden">
+<div id="hud-timer-bar" class="h-full w-full rounded-full bg-gradient-to-r from-emerald-500 via-lime-400 to-amber-400 transition-all duration-75"></div>
+<span id="hud-timer-text" class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white drop-shadow">30.0초</span>
+</div>
+
+<!-- 모바일용 단계 안내 문구 -->
+<div id="phase-guide-mobile" class="sm:hidden text-center py-1 px-3 rounded bg-black/75 border border-amber-500/50 text-amber-300 text-xs font-bold">
+📦 물건을 드래그해서 스캐너에 찍으세요!
+</div>
+</div>
+
+<!-- 중앙 3D 공간 안내 표시 (스캐너 존 & POS 모니터 정보) -->
+<div class="w-full max-w-4xl mx-auto my-auto flex justify-between items-center px-2 pointer-events-none">
+<!-- 좌측 컨베이어 힌트 -->
+<div id="hint-conveyor" class="bg-black/60 border border-stone-600/70 rounded-lg px-3 py-2 text-xs text-stone-300">
+<div class="font-bold text-amber-400 mb-0.5">◀ 컨베이어 벨트</div>
+<div>남은 물건: <span id="hud-items-left" class="text-white font-bold">0</span>개</div>
+</div>
+
+<!-- 우측 POS & 손님 지불 금액 요약 카드 -->
+<div id="pos-status-card" class="bg-stone-900/90 border-2 border-stone-500 rounded-xl p-3 sm:p-4 text-right shadow-2xl min-w-[155px] sm:min-w-[190px]">
+<div class="text-[11px] text-stone-400 font-bold">POS 계산 합계</div>
+<div id="hud-total-price" class="font-sub text-2xl sm:text-3xl text-white">0원</div>
+<div id="payment-info-box" class="hidden mt-2 pt-2 border-t border-stone-700">
+<div class="text-[11px] text-emerald-400 font-bold">손님이 낸 돈</div>
+<div id="hud-paid-amount" class="font-sub text-xl sm:text-2xl text-emerald-300">0원</div>
+</div>
+</div>
+</div>
+
+<!-- 하단 거스름돈 계산 패널 (2단계: 스캔 완료 후 활성화) -->
+<div id="change-panel" class="hidden w-full max-w-2xl mx-auto bg-stone-950/95 border-2 border-amber-500/80 rounded-2xl p-3 sm:p-4 shadow-2xl pointer-events-auto">
+<div class="flex items-center justify-between mb-2.5 pb-2 border-b border-stone-800">
+<div>
+<span class="text-xs text-stone-400 block">거슬러 줄 금액 (목표)</span>
+<span id="hud-target-change" class="font-sub text-xl sm:text-2xl text-amber-400">0원</span>
+</div>
+<div class="text-right">
+<span class="text-xs text-stone-400 block">현재 준비한 거스름돈</span>
+<span id="hud-current-change" class="font-sub text-2xl sm:text-3xl text-cyan-400">0원</span>
+</div>
+</div>
+
+<!-- 화폐 버튼 4종 (5000원, 1000원, 500원, 100원) -->
+<div class="grid grid-cols-4 gap-2 sm:gap-3 mb-2.5">
+<button data-val="5000" class="money-btn bg-gradient-to-b from-amber-700 to-amber-900 border border-amber-400 text-amber-100 rounded-xl py-2.5 sm:py-3 font-sub text-base sm:text-xl cursor-pointer">
++5,000원
+</button>
+<button data-val="1000" class="money-btn bg-gradient-to-b from-sky-700 to-sky-900 border border-sky-400 text-sky-100 rounded-xl py-2.5 sm:py-3 font-sub text-base sm:text-xl cursor-pointer">
++1,000원
+</button>
+<button data-val="500" class="money-btn bg-gradient-to-b from-stone-500 to-stone-700 border border-stone-300 text-white rounded-xl py-2.5 sm:py-3 font-sub text-base sm:text-xl cursor-pointer">
++500원
+</button>
+<button data-val="100" class="money-btn bg-gradient-to-b from-zinc-600 to-zinc-800 border border-zinc-400 text-zinc-100 rounded-xl py-2.5 sm:py-3 font-sub text-base sm:text-xl cursor-pointer">
++100원
+</button>
+</div>
+
+<!-- 초기화 및 거스름돈 지급 완료 버튼 -->
+<div class="grid grid-cols-3 gap-2 sm:gap-3">
+<button id="btn-reset-change" class="col-span-1 bg-rose-900/90 hover:bg-rose-800 border border-rose-500 text-rose-100 rounded-xl py-2.5 font-bold text-sm sm:text-base cursor-pointer">
+다시 담기 🔄
+</button>
+<button id="btn-submit-change" class="col-span-2 bg-emerald-600 hover:bg-emerald-500 border border-emerald-300 text-white rounded-xl py-2.5 font-sub text-lg sm:text-2xl tracking-wider shadow-lg cursor-pointer">
+거스름돈 건네기 ✅
+</button>
+</div>
+</div>
+</div>
+
+<!-- =========================================================
+     4. 근무 매뉴얼 (튜토리얼 팝업 모달)
+========================================================= -->
+<div id="modal-manual" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+<div class="bg-stone-900 border-2 border-stone-500 rounded-2xl w-full max-w-lg max-h-[88vh] flex flex-col shadow-2xl overflow-hidden">
+<!-- 모달 헤더 -->
+<div class="bg-stone-800 px-5 py-4 border-b border-stone-600 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="text-xl">📖</span>
+<h2 class="font-sub text-2xl text-stone-100 tracking-wide">PX병 근무 매뉴얼</h2>
+</div>
+<button id="btn-close-manual" class="text-stone-400 hover:text-white text-2xl font-bold leading-none cursor-pointer">&times;</button>
+</div>
+
+<!-- 모달 본문 -->
+<div class="p-5 overflow-y-auto space-y-4 text-sm sm:text-base text-stone-200 leading-relaxed">
+<div class="bg-stone-950/80 border border-stone-700 rounded-xl p-4">
+<h3 class="font-bold text-amber-400 text-base sm:text-lg mb-1">1단계: 컨베이어 물품 바코드 스캔</h3>
+<p class="text-stone-300 text-xs sm:text-sm">
+왼쪽 컨베이어 벨트에서 올라오는 <span class="text-white font-bold">1~4개의 PX 물품</span>을 마우스 또는 손가락으로 드래그하여 오른쪽 <span class="text-red-400 font-bold">붉은 바코드 스캐너</span>에 갖다 대세요. 모든 물건이 찍히면 POS기에 총 금액이 표시됩니다.
+</p>
+</div>
+
+<div class="bg-stone-950/80 border border-stone-700 rounded-xl p-4">
+<h3 class="font-bold text-emerald-400 text-base sm:text-lg mb-1">2단계: 선임 결제 확인 및 거스름돈 지급</h3>
+<p class="text-stone-300 text-xs sm:text-sm">
+스캔이 끝나면 고개를 들어(카메라 전환) 군복 입은 손님이 내미는 지폐를 확인합니다. <span class="text-white font-bold">[낸 돈 - 물건 합계]</span>만큼 화폐 버튼을 눌러 정확히 거슬러 주세요!
+</p>
+</div>
+
+<div class="bg-stone-950/80 border border-stone-700 rounded-xl p-4">
+<h3 class="font-bold text-cyan-400 text-base sm:text-lg mb-2">3단계: PX 취급 품목 7종 단가표</h3>
+<div class="grid grid-cols-2 gap-2 text-xs">
+<div class="bg-stone-900 p-2 rounded border border-stone-700 flex justify-between"><span>🔵 블루 이온음료</span><span class="text-amber-300 font-bold">1,200원</span></div>
+<div class="bg-stone-900 p-2 rounded border border-stone-700 flex justify-between"><span>🔴 비법 고추장소스</span><span class="text-amber-300 font-bold">2,000원</span></div>
+<div class="bg-stone-900 p-2 rounded border border-stone-700 flex justify-between"><span>🟤 슈퍼 초코빵</span><span class="text-amber-300 font-bold">600원</span></div>
+<div class="bg-stone-900 p-2 rounded border border-stone-700 flex justify-between"><span>🟢 냉동 닭가슴살</span><span class="text-amber-300 font-bold">3,500원</span></div>
+<div class="bg-stone-900 p-2 rounded border border-stone-700 flex justify-between"><span>🟡 참기름 참치캔</span><span class="text-amber-300 font-bold">1,800원</span></div>
+<div class="bg-stone-900 p-2 rounded border border-stone-700 flex justify-between"><span>⚫ 매운 컵볶음면</span><span class="text-amber-300 font-bold">1,500원</span></div>
+<div class="bg-stone-900 p-2 rounded border border-stone-700 flex justify-between col-span-2"><span>⚪ 황금 달팽이크림</span><span class="text-amber-300 font-bold">5,000원</span></div>
+</div>
+</div>
+
+<div class="bg-amber-950/40 border border-amber-700/60 rounded-xl p-3 text-xs text-amber-200">
+※ 연속으로 실수 없이 계산할 때마다 콤보 점수가 폭발하며, <strong>3명 연속 완벽 처리 시 제한 시간이 +3.0초 연장</strong>됩니다. 거스름돈이 틀리면 선임의 눈총과 함께 <strong>-2.5초 감점</strong>됩니다!
+</div>
+</div>
+
+<!-- 모달 푸터 -->
+<div class="p-4 bg-stone-800 border-t border-stone-600 text-right">
+<button id="btn-confirm-manual" class="w-full py-2.5 bg-olive-700 bg-[#4b533c] hover:bg-[#5c664a] border border-[#8a9673] text-white font-sub text-xl rounded-xl cursor-pointer">
+숙지 완료! (닫기)
+</button>
+</div>
+</div>
+</div>
+
+<!-- =========================================================
+     5. 기수 서열표 (순위표 팝업 모달)
+========================================================= -->
+<div id="modal-rank" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+<div class="bg-stone-900 border-2 border-stone-500 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+<!-- 모달 헤더 -->
+<div class="bg-stone-800 px-5 py-4 border-b border-stone-600 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="text-xl">🏆</span>
+<h2 class="font-sub text-2xl text-amber-300 tracking-wide">PX 기수 서열표 (명예의 전당)</h2>
+</div>
+<button id="btn-close-rank" class="text-stone-400 hover:text-white text-2xl font-bold leading-none cursor-pointer">&times;</button>
+</div>
+
+<!-- 서열 리스트 -->
+<div id="rank-list-container" class="p-5 overflow-y-auto space-y-2.5">
+<!-- JS로 동적 렌더링 -->
+</div>
+
+<!-- 모달 푸터 -->
+<div class="p-4 bg-stone-800 border-t border-stone-600">
+<button id="btn-confirm-rank" class="w-full py-2.5 bg-[#4b533c] hover:bg-[#5c664a] border border-[#8a9673] text-white font-sub text-xl rounded-xl cursor-pointer">
+확인 (닫기)
+</button>
+</div>
+</div>
+</div>
+
+<!-- =========================================================
+     6. 근무 종료 결과 모달 (게임 오버)
+========================================================= -->
+<div id="gameover-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+<div class="bg-stone-900 border-2 border-amber-500/80 rounded-2xl w-full max-w-md p-6 text-center shadow-2xl">
+<div id="new-record-tag" class="hidden inline-block px-3 py-1 mb-2 rounded-full bg-amber-500 text-stone-950 font-black text-xs tracking-wider animate-bounce">
+🎖️ 부대 신기록 달성! 🎖️
+</div>
+<h2 class="font-military text-4xl sm:text-5xl text-stone-100 mb-2">일과 종료!</h2>
+<p id="gameover-eval-msg" class="text-sm text-amber-300 font-bold mb-5">"이 정도면 A급 PX병이다! 포상휴가 건의하겠다."</p>
+
+<div class="bg-stone-950 border border-stone-700 rounded-xl p-4 mb-6 space-y-3 text-left">
+<div class="flex justify-between items-center border-b border-stone-800 pb-2">
+<span class="text-stone-400 text-sm">최종 근무 평점</span>
+<span id="res-score" class="font-sub text-3xl text-amber-400">0점</span>
+</div>
+<div class="flex justify-between items-center border-b border-stone-800 pb-2">
+<span class="text-stone-400 text-sm">응대한 장병 수</span>
+<span id="res-customers" class="font-sub text-xl text-emerald-400">0명</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-stone-400 text-sm">최대 연속 콤보</span>
+<span id="res-max-combo" class="font-sub text-xl text-cyan-400">0콤보</span>
+</div>
+</div>
+
+<div class="flex flex-col gap-2.5">
+<button id="btn-retry-game" class="px-menu-btn w-full py-3.5 text-white font-sub text-2xl tracking-wider">
+다시 근무 투입 🔄
+</button>
+<button id="btn-back-cover" class="w-full py-2.5 bg-stone-800 hover:bg-stone-700 border border-stone-600 text-stone-300 font-sub text-lg rounded-xl cursor-pointer">
+위병소(표지)로 복귀
+</button>
+</div>
+</div>
+</div>
+
 <script>
-const itemsData=[
-{name:"블루 웨이브",price:1200,color:0x3182ce},
-{name:"매운 고추장 튜브",price:2000,color:0xe53e3e},
-{name:"슈퍼 초코 파이",price:600,color:0x744210},
-{name:"냉동 닭가슴살",price:3500,color:0x4a5568},
-{name:"참기름 참치 캔",price:1800,color:0xd69e2e},
-{name:"치즈 불닭 볶음면",price:1500,color:0xdd6b20},
-{name:"황금 달팽이 크림",price:5000,color:0xb7791f)
+/**
+ * ============================================================================
+ * 1. 사운드 매니저 (Tone.js 기반 브라우저 신디사이저 - 외부 오디오 파일 미사용)
+ * ============================================================================
+ */
+class PxSoundManager {
+constructor() {
+this.enabled = true;
+this.ready = false;
+this.synth = null;
+}
+
+async init() {
+if (this.ready) return;
+try {
+await Tone.start();
+this.synth = new Tone.PolySynth(Tone.Synth, {
+oscillator: { type: "triangle" },
+envelope: { attack: 0.01, decay: 0.08, sustain: 0.05, release: 0.15 }
+}).toDestination();
+this.synth.volume.value = -6;
+this.ready = true;
+} catch (err) {
+console.warn("오디오 초기화 건너뜀:", err);
+}
+}
+
+toggle() {
+this.enabled = !this.enabled;
+return this.enabled;
+}
+
+// 바코드 스캔 '삑!' 효과음
+playBeep() {
+if (!this.enabled || !this.ready) return;
+this.synth.triggerAttackRelease("B5", "32n");
+}
+
+// 동전/지폐 추가 효과음
+playCoin() {
+if (!this.enabled || !this.ready) return;
+this.synth.triggerAttackRelease("E6", "32n");
+}
+
+// 계산 완료(정답) 경쾌한 효과음
+playSuccess(combo) {
+if (!this.enabled || !this.ready) return;
+const now = Tone.now();
+const baseNotes = ["C5", "E5", "G5", "C6"];
+const shift = Math.min(combo, 4);
+this.synth.triggerAttackRelease(baseNotes[0], "16n", now);
+this.synth.triggerAttackRelease(baseNotes[Math.min(3, 1 + Math.floor(shift / 2))], "16n", now + 0.07);
+this.synth.triggerAttackRelease("C6", "8n", now + 0.14);
+}
+
+// 계산 실수(오답) 경고음
+playError() {
+if (!this.enabled || !this.ready) return;
+const now = Tone.now();
+this.synth.triggerAttackRelease(["C3", "Db3"], "8n", now);
+this.synth.triggerAttackRelease(["B2", "C3"], "8n", now + 0.12);
+}
+
+// 인트로 대사 타자기 틱 소리
+playDialogueTick() {
+if (!this.enabled || !this.ready) return;
+this.synth.triggerAttackRelease("G4", "64n");
+}
+}
+
+/**
+ * ============================================================================
+ * 2. 7종 PX 패러디 상품 데이터 정의 (상표권 없는 순수 그래픽 디자인)
+ * ============================================================================
+ */
+const PX_ITEMS_CATALOG = [
+{ id: "ion_drink", name: "블루 이온음료", price: 1200, color: 0x0284c7, accent: 0xffffff, shape: "bottle" },
+{ id: "sauce_tube", name: "비법 고추장소스", price: 2000, color: 0xdc2626, accent: 0xfacc15, shape: "tube" },
+{ id: "choco_pie", name: "슈퍼 초코빵", price: 600, color: 0x451a03, accent: 0xfef08a, shape: "box" },
+{ id: "chicken", name: "냉동 닭가슴살", price: 3500, color: 0x3f6212, accent: 0xd9f99d, shape: "pouch" },
+{ id: "tuna_can", name: "참기름 참치캔", price: 1800, color: 0xeab308, accent: 0x1d4ed8, shape: "can" },
+{ id: "spicy_cup", name: "매운 컵볶음면", price: 1500, color: 0x18181b, accent: 0xef4444, shape: "cup" },
+{ id: "snail_cream", name: "황금 달팽이크림", price: 5000, color: 0xf8fafc, accent: 0xd97706, shape: "jar" }
 ];
-let scene,camera,renderer;
-let gameState='COVER';
-let score=0,combo=0,timeLeft=30.0;
-let currentItems=[],scannedCount=0, totalPrice=0, paidAmount=0, currentGiven=0;
-let soldierMesh,conveyorBelt;
-function init3D(){
-const container=document.getElementById('game-container');
-scene=new THREE.Scene();
-scene.background=new THREE.Color(0x0f0f15);
-camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
-camera.position.set(0,3,5);
-camera.lookAt(0,1,0);
-renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.shadowMap.enabled=true;
-container.appendChild(renderer.domElement);
-const ambientLight=new THREE.AmbientLight(0xffffff,0.7);
-scene.add(ambientLight);
-const dirLight=new THREE.DirectionalLight(0xffffff,0.8);
-dirLight.position.set(5,10,5);
-dirLight.castShadow=true;
-scene.add(dirLight);
-const counterGeo=new THREE.BoxGeometry(6,2,2);
-const counterMat=new THREE.MeshStandardMaterial({color:0x2d3748});
-const counter=new THREE.Mesh(counterGeo,counterMat);
-counter.position.set(0,-1,0);
-scene.add(counter);
-const scannerGeo=new THREE.BoxGeometry(0.8,0.6,1);
-const scannerMat=new THREE.MeshStandardMaterial({color:0x1a202c});
-const scanner=new THREE.Mesh(scannerGeo,scannerMat);
-scanner.position.set(1.5,0.1,0);
-scene.add(scanner);
-const soldierGeo=new THREE.BoxGeometry(1.8,2,0.8);
-const soldierMat=new THREE.MeshStandardMaterial({color:0x3f6212});
-soldierMesh=new THREE.Mesh(soldierGeo,soldierMat);
-soldierMesh.position.set(0,1,-2);
-scene.add(soldierMesh);
-window.addEventListener('resize',onWindowResize);
+
+/**
+ * ============================================================================
+ * 3. 메인 3D PX 시뮬레이터 게임 엔진 (Three.js + 상태 머신)
+ * ============================================================================
+ */
+class PxSoldier3DGame {
+constructor() {
+this.sound = new PxSoundManager();
+
+// 게임 설정 상수
+this.INITIAL_TIME = 30.0;
+this.MAX_TIME = 45.0;
+this.STATE = {
+COVER: "COVER",
+INTRO: "INTRO",
+SCANNING: "SCANNING",
+PAYMENT: "PAYMENT",
+GAMEOVER: "GAMEOVER"
+};
+this.currentState = this.STATE.COVER;
+
+// 플레이 데이터
+this.score = 0;
+this.combo = 0;
+this.maxCombo = 0;
+this.customersServed = 0;
+this.timeLeft = this.INITIAL_TIME;
+this.timerId = null;
+
+// 현재 손님 거래 데이터
+this.activeItems = []; // 3D 메쉬 배열
+this.totalPrice = 0;
+this.paidAmount = 0;
+this.targetChange = 0;
+this.currentChange = 0;
+
+// 3D 드래그 앤 드롭 변수
+this.raycaster = new THREE.Raycaster();
+this.pointer = new THREE.Vector2();
+this.draggedMesh = null;
+this.dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -1.1);
+this.dragOffset = new THREE.Vector3();
+
+// 카메라 목표 위치 및 시선 (부드러운 3D 시점 전환용)
+this.camTargetPos = new THREE.Vector3(0, 2.35, 3.6);
+this.camTargetLook = new THREE.Vector3(0, 1.35, 0);
+this.camCurrentLook = new THREE.Vector3(0, 1.35, 0);
+
+// 인트로 타이머 관리
+this.introTimeoutIds = [];
+this.introAnimFrame = null;
+
+// 기수 서열표 데이터 (메모리 기본값)
+this.leaderboard = [
+{ rankName: "병장", name: "김상병장", score: 18400, isMe: false },
+{ rankName: "상병", name: "박일병출신", score: 14200, isMe: false },
+{ rankName: "상병", name: "이충성", score: 11500, isMe: false },
+{ rankName: "일병", name: "최행정", score: 8600, isMe: false },
+{ rankName: "이병", name: "정신병", score: 4200, isMe: false }
+];
+
+this.initThreeScene();
+this.buildPxEnvironment();
+this.buildFacelessSoldier();
+this.bindUIEvents();
+this.bind3DInteractionEvents();
+this.renderLeaderboard();
+
+// 애니메이션 루프 시작
+this.lastFrameTime = performance.now();
+this.animate = this.animate.bind(this);
+requestAnimationFrame(this.animate);
 }
-function onWindowResize(){
-camera.aspect=window.innerWidth/window.innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(window.innerWidth,window.innerHeight);
-}
-function startIntro(){
-document.getElementById('cover-screen').style.display='none';
-const intro=document.getElementById('intro-overlay');
-intro.style.display='flex';
-setTimeout(()=>{document.getElementById('intro-msg-1').style.opacity=1;},500);
-setTimeout(()=>{document.getElementById('intro-msg-1').style.opacity=0;document.getElementById('intro-msg-2').style.opacity=1;},3500);
-setTimeout(()=>{document.getElementById('intro-msg-2').style.opacity=0;document.getElementById('intro-msg-3').style.opacity=1;},6500);
-setTimeout(()=>{
-intro.style.display='none';
-document.getElementById('game-container').style.display='block';
-document.getElementById('ui-hud').style.display='flex';
-document.getElementById('interaction-panel').style.display='flex';
-init3D();
-startGameLoop();
-},9500);
-}
-function startGameLoop(){
-gameState='SCANNING';
-spawnCustomer();
-let lastTime=performance.now();
-function loop(now){
-if(gameState==='GAMEOVER')return;
-let dt=(now-lastTime)/1000;
-lastTime=now;
-timeLeft-=dt;
-if(timeLeft<=0){
-timeLeft=0;
-endGame();
-}
-updateHUD();
-renderer.render(scene,camera);
-requestAnimationFrame(loop);
-}
-requestAnimationFrame(loop);
-}
-function updateHUD(){
-document.getElementById('hud-score').innerText=`점수: ${score.toLocaleString()}점`;
-document.getElementById('hud-combo').innerText=`콤보: ${combo} COMBO`;
-document.getElementById('hud-timer').innerText=`남은 시간: ${timeLeft.toFixed(1)}초`;
-}
-function spawnCustomer(){
-scannedCount=0;
-totalPrice=0;
-currentGiven=0;
-const count=Math.floor(Math.random()*4)+1;
-currentItems=[];
-for(let i=0;i<count;i++){
-let item=itemsData[Math.floor(Math.random()*itemsData.length)];
-currentItems.push(item);
-totalPrice+=item.price;
-}
-const denomList=[5000,10000,20000,50000];
-paidAmount=totalPrice+denomList[Math.floor(Math.random()*denomList.length)];
-if(paidAmount<totalPrice)paidAmount=totalPrice+5000;
-renderScanUI();
-}
-function renderScanUI(){
-document.getElementById('panel-instruction').innerText="1단계: 컨베이어 물건을 클릭하여 바코드를 찍으세요!";
-document.getElementById('change-calc-area').style.display='none';
-const box=document.getElementById('item-scan-box');
-box.innerHTML='';
-currentItems.forEach((item,idx)=>{
-let btn=document.createElement('div');
-btn.className='scannable-item';
-btn.innerText=`${item.name} (${item.price.toLocaleString()}원)`;
-btn.onclick=()=>scanItem(idx,btn);
-box.appendChild(btn);
+
+/**
+ * ------------------------------------------------------------------------
+ * 3-1. Three.js 씬, 카메라, 조명 초기화
+ * ------------------------------------------------------------------------
+ */
+initThreeScene() {
+const container = document.getElementById("canvas-container");
+this.scene = new THREE.Scene();
+this.scene.background = new THREE.Color(0x141a15);
+this.scene.fog = new THREE.FogExp2(0x141a15, 0.085);
+
+this.camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 50);
+this.camera.position.copy(this.camTargetPos);
+
+this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+this.renderer.setSize(window.innerWidth, window.innerHeight);
+this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+this.renderer.shadowMap.enabled = true;
+this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(this.renderer.domElement);
+
+// PX 형광등 조명 세팅 (첨부 이미지의 차가운 형광등 + 묵직한 명암 재현)
+const ambientLight = new THREE.AmbientLight(0xdbe4dc, 0.55);
+this.scene.add(ambientLight);
+
+const mainCeilingLight = new THREE.PointLight(0xf0fdf4, 1.1, 18);
+mainCeilingLight.position.set(0, 4.5, 1.2);
+mainCeilingLight.castShadow = true;
+this.scene.add(mainCeilingLight);
+
+const counterSpotLight = new THREE.SpotLight(0xfffbeb, 0.9);
+counterSpotLight.position.set(-1.5, 4.0, 2.5);
+counterSpotLight.target.position.set(0, 1.0, 0.5);
+this.scene.add(counterSpotLight);
+this.scene.add(counterSpotLight.target);
+
+// 반응형 리사이즈 처리
+window.addEventListener("resize", () => {
+this.camera.aspect = window.innerWidth / window.innerHeight;
+this.camera.updateProjectionMatrix();
+this.renderer.setSize(window.innerWidth, window.innerHeight);
 });
 }
-function scanItem(idx,btn){
-if(btn.classList.contains('scanned'))return;
-btn.classList.add('scanned');
-scannedCount++;
-if(scannedCount===currentItems.length){
-setTimeout(startChangePhase,400);
+
+/**
+ * ------------------------------------------------------------------------
+ * 3-2. 3D PX 매장 내부, 카운터, 컨베이어 벨트, POS 모니터, 바코드 스캐너 구축
+ * ------------------------------------------------------------------------
+ */
+buildPxEnvironment() {
+// 1. PX 매장 바닥 및 뒷벽
+const floorGeo = new THREE.PlaneGeometry(20, 20);
+const floorMat = new THREE.MeshStandardMaterial({ color: 0x1e241f, roughness: 0.85 });
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+this.scene.add(floor);
+
+// 천장 형광등 바 3개 (표지 배경의 형광등 라인 재현)
+for (let i = 0; i < 3; i++) {
+const tubeGeo = new THREE.BoxGeometry(3.6, 0.08, 0.25);
+const tubeMat = new THREE.MeshBasicMaterial({ color: 0xe2f1e8 });
+const tube = new THREE.Mesh(tubeGeo, tubeMat);
+tube.position.set((i - 1) * 2.2, 4.4, -2.5 - i * 1.2);
+tube.rotation.y = 0.2;
+this.scene.add(tube);
+}
+
+// 뒷배경 진열대 및 군용 상품 박스들 (실루엣 깊이감 연출)
+const shelfGroup = new THREE.Group();
+for (let row = 0; row < 3; row++) {
+const shelfBoard = new THREE.Mesh(
+new THREE.BoxGeometry(4.5, 0.08, 0.6),
+new THREE.MeshStandardMaterial({ color: 0x292d2a })
+);
+shelfBoard.position.set(-2.6, 1.2 + row * 0.75, -2.6);
+shelfGroup.add(shelfBoard);
+
+for (let col = 0; col < 7; col++) {
+const itemColor = PX_ITEMS_CATALOG[(row + col) % PX_ITEMS_CATALOG.length].color;
+const mockBox = new THREE.Mesh(
+new THREE.BoxGeometry(0.45, 0.5, 0.35),
+new THREE.MeshStandardMaterial({ color: itemColor, roughness: 0.6 })
+);
+mockBox.position.set(-4.3 + col * 0.56, 1.5 + row * 0.75, -2.6);
+shelfGroup.add(mockBox);
 }
 }
-function startChangePhase(){
-gameState='CHANGE';
-document.getElementById('panel-instruction').innerText="2단계: 군복 선임이 내민 돈의 거스름돈을 계산하세요!";
-document.getElementById('item-scan-box').innerHTML=`총 금액: <b>${totalPrice.toLocaleString()}원</b>`;
-document.getElementById('change-calc-area').style.display='block';
-document.getElementById('pay-amount').innerText=`${paidAmount.toLocaleString()}원`;
-document.getElementById('change-target').innerText=`${(paidAmount-totalPrice).toLocaleString()}원`;
-document.getElementById('current-given-val').innerText=`0원`;
-currentGiven=0;
+this.scene.add(shelfGroup);
+
+// 2. 메인 계산대 카운터 테이블 (어두운 메탈/우드 질감)
+const counterGeo = new THREE.BoxGeometry(5.2, 1.0, 2.0);
+const counterMat = new THREE.MeshStandardMaterial({ color: 0x222624, roughness: 0.7, metalness: 0.2 });
+const counter = new THREE.Mesh(counterGeo, counterMat);
+counter.position.set(0, 0.5, 0.5);
+counter.receiveShadow = true;
+this.scene.add(counter);
+
+// 3. 왼쪽 컨베이어 벨트 영역 (물건들이 올라오는 레일)
+const beltGeo = new THREE.BoxGeometry(2.3, 0.06, 1.25);
+const beltMat = new THREE.MeshStandardMaterial({ color: 0x111312, roughness: 0.9 });
+this.conveyorMesh = new THREE.Mesh(beltGeo, beltMat);
+this.conveyorMesh.position.set(-1.15, 1.02, 0.55);
+this.conveyorMesh.receiveShadow = true;
+this.scene.add(this.conveyorMesh);
+
+// 컨베이어 테두리 노란 안전선
+const borderMat = new THREE.MeshBasicMaterial({ color: 0xb45309 });
+const frontBorder = new THREE.Mesh(new THREE.BoxGeometry(2.34, 0.07, 0.05), borderMat);
+frontBorder.position.set(-1.15, 1.02, 1.18);
+this.scene.add(frontBorder);
+
+// 4. 중앙 구식 아이보리 POS 모니터 (첨부 이미지의 그 POS기!)
+const posGroup = new THREE.Group();
+// 모니터 받침대
+const stand = new THREE.Mesh(
+new THREE.BoxGeometry(0.45, 0.35, 0.4),
+new THREE.MeshStandardMaterial({ color: 0xb8b29e, roughness: 0.8 })
+);
+stand.position.set(0, 0.17, 0);
+posGroup.add(stand);
+
+// 모니터 베젤
+const bezel = new THREE.Mesh(
+new THREE.BoxGeometry(0.95, 0.78, 0.22),
+new THREE.MeshStandardMaterial({ color: 0xc8c2ae, roughness: 0.75 })
+);
+bezel.position.set(0, 0.65, 0.05);
+bezel.rotation.x = -0.15;
+posGroup.add(bezel);
+
+// POS 액정 화면 (동적 캔버스 텍스처로 금액 실시간 표시!)
+this.posCanvas = document.createElement("canvas");
+this.posCanvas.width = 512;
+this.posCanvas.height = 384;
+this.posCtx = this.posCanvas.getContext("2d");
+this.posTexture = new THREE.CanvasTexture(this.posCanvas);
+
+const screenMesh = new THREE.Mesh(
+new THREE.PlaneGeometry(0.78, 0.62),
+new THREE.MeshBasicMaterial({ map: this.posTexture })
+);
+screenMesh.position.set(0, 0.65, 0.165);
+screenMesh.rotation.x = -0.15;
+posGroup.add(screenMesh);
+
+posGroup.position.set(-0.25, 1.0, -0.05);
+posGroup.rotation.y = 0.15;
+this.scene.add(posGroup);
+this.updatePosMonitorScreen(0, "대기 중");
+
+// 5. 오른쪽 바코드 스캐너 존 (물건을 드래그해서 갖다 대는 목표 지점)
+const scannerZoneGroup = new THREE.Group();
+const padGeo = new THREE.BoxGeometry(1.15, 0.05, 1.05);
+const padMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4, metalness: 0.5 });
+const padMesh = new THREE.Mesh(padGeo, padMat);
+scannerZoneGroup.add(padMesh);
+
+// 스캐너 레이저 유리창 & 붉은 레이저 빛
+const glassGeo = new THREE.PlaneGeometry(0.75, 0.65);
+this.scannerGlassMat = new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0.35 });
+const glassMesh = new THREE.Mesh(glassGeo, this.scannerGlassMat);
+glassMesh.rotation.x = -Math.PI / 2;
+glassMesh.position.y = 0.03;
+scannerZoneGroup.add(glassMesh);
+
+// 핸드 스캐너 거치대 모형 (표지 좌측 스캐너 오마주)
+const gunBody = new THREE.Mesh(
+new THREE.BoxGeometry(0.18, 0.22, 0.42),
+new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.6 })
+);
+gunBody.position.set(0.45, 0.22, -0.25);
+gunBody.rotation.set(0.3, -0.4, 0);
+scannerZoneGroup.add(gunBody);
+
+scannerZoneGroup.position.set(1.05, 1.02, 0.62);
+this.scene.add(scannerZoneGroup);
+this.scannerPosition = new THREE.Vector3(1.05, 1.1, 0.62);
 }
-function addChange(amt){
-currentGiven+=amt;
-document.getElementById('current-given-val').innerText=`${currentGiven.toLocaleString()}원`;
-let targetChange=paidAmount-totalPrice;
-if(currentGiven===targetChange){
-successRound();
-}else if(currentGiven>targetChange){
-failRound();
+
+/**
+ * POS 모니터 캔버스 텍스처 실시간 갱신 함수
+ */
+updatePosMonitorScreen(amount, statusText) {
+const ctx = this.posCtx;
+ctx.fillStyle = "#cbd5e1";
+ctx.fillRect(0, 0, 512, 384);
+
+// 상단 금액 표시 바 (표지의 7,400원 흰색 바 재현)
+ctx.fillStyle = "#f8fafc";
+ctx.fillRect(24, 32, 464, 110);
+ctx.strokeStyle = "#64748b";
+ctx.lineWidth = 4;
+ctx.strokeRect(24, 32, 464, 110);
+
+ctx.fillStyle = "#0f172a";
+ctx.font = "900 68px 'Noto Sans KR', sans-serif";
+ctx.textAlign = "right";
+ctx.fillText(`${amount.toLocaleString()}원`, 465, 112);
+
+// 하단 상태 메시지
+ctx.fillStyle = "#334155";
+ctx.fillRect(24, 170, 464, 180);
+ctx.fillStyle = "#38bdf8";
+ctx.font = "bold 34px 'Noto Sans KR', sans-serif";
+ctx.textAlign = "center";
+ctx.fillText(statusText, 256, 250);
+
+ctx.fillStyle = "#94a3b8";
+ctx.font = "24px 'Noto Sans KR', sans-serif";
+ctx.fillText("충성마트 POS SYSTEM", 256, 310);
+
+this.posTexture.needsUpdate = true;
 }
+
+/**
+ * ------------------------------------------------------------------------
+ * 3-3. 얼굴 없는 군복 입은 손님(상체까지만 보이는 3D 캐릭터) 구축
+ * 요구사항 5, 6: 각 캐릭터의 얼굴은 나오지 않고 군복 입은 상체까지만 구현
+ * ------------------------------------------------------------------------
+ */
+buildFacelessSoldier() {
+this.soldierGroup = new THREE.Group();
+
+// 디지털 군복 패턴 캔버스 텍스처 생성
+const camoCanvas = document.createElement("canvas");
+camoCanvas.width = 256;
+camoCanvas.height = 256;
+const cCtx = camoCanvas.getContext("2d");
+cCtx.fillStyle = "#48523b";
+cCtx.fillRect(0, 0, 256, 256);
+const camoColors = ["#2b3322", "#636e52", "#1f2419", "#78715a"];
+for (let i = 0; i < 160; i++) {
+cCtx.fillStyle = camoColors[i % camoColors.length];
+cCtx.fillRect(Math.random() * 256, Math.random() * 256, 18 + Math.random() * 22, 10 + Math.random() * 14);
 }
-function successRound(){
-combo++;
-let addedScore=100+(combo-1)*15;
-score+=addedScore;
-if(combo%5===0){
-timeLeft+=1.5;
-if(timeLeft>30)timeLeft=30;
+const camoTexture = new THREE.CanvasTexture(camoCanvas);
+const uniformMat = new THREE.MeshStandardMaterial({ map: camoTexture, roughness: 0.85 });
+
+// 군복 상체 (몸통 - 어깨와 가슴까지만 표현, 목 위로 얼굴 없음!)
+const torsoGeo = new THREE.BoxGeometry(1.15, 1.15, 0.55);
+const torso = new THREE.Mesh(torsoGeo, uniformMat);
+torso.position.set(0, 1.35, 0);
+torso.castShadow = true;
+this.soldierGroup.add(torso);
+
+// 옷깃 (카라) 디테일
+const collar = new THREE.Mesh(
+new THREE.CylinderGeometry(0.24, 0.28, 0.14, 16),
+uniformMat
+);
+collar.position.set(0, 1.95, 0);
+this.soldierGroup.add(collar);
+
+// 오른쪽 팔 & 지폐를 내미는 손
+this.rightArmGroup = new THREE.Group();
+const armMesh = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.26, 0.85), uniformMat);
+armMesh.position.set(0, 0, 0.35);
+this.rightArmGroup.add(armMesh);
+
+// 손 (피부톤)
+const handMesh = new THREE.Mesh(
+new THREE.BoxGeometry(0.2, 0.14, 0.24),
+new THREE.MeshStandardMaterial({ color: 0xd4a373, roughness: 0.7 })
+);
+handMesh.position.set(0, 0, 0.82);
+this.rightArmGroup.add(handMesh);
+
+// 손에 쥔 3D 지폐 메쉬 (동적 금액 텍스처)
+this.billCanvas = document.createElement("canvas");
+this.billCanvas.width = 256;
+this.billCanvas.height = 128;
+this.billCtx = this.billCanvas.getContext("2d");
+this.billTexture = new THREE.CanvasTexture(this.billCanvas);
+
+this.billMesh = new THREE.Mesh(
+new THREE.BoxGeometry(0.45, 0.015, 0.22),
+new THREE.MeshBasicMaterial({ map: this.billTexture })
+);
+this.billMesh.position.set(0, 0.04, 0.98);
+this.billMesh.rotation.y = 0.25;
+this.billMesh.visible = false;
+this.rightArmGroup.add(this.billMesh);
+
+this.rightArmGroup.position.set(-0.55, 1.48, 0.1);
+this.soldierGroup.add(this.rightArmGroup);
+
+// 왼쪽 팔 (자연스럽게 내린 자세)
+const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.85, 0.25), uniformMat);
+leftArm.position.set(0.68, 1.35, 0.05);
+this.soldierGroup.add(leftArm);
+
+// 손님 위치: 카운터 건너편 (z = -0.85)
+this.soldierGroup.position.set(0.35, 0, -0.85);
+this.soldierGroup.visible = false;
+this.scene.add(this.soldierGroup);
 }
-gameState='SCANNING';
-spawnCustomer();
+
+/**
+ * 손님이 내미는 3D 지폐 텍스처 업데이트
+ */
+updateBillTexture(paidAmount) {
+const ctx = this.billCtx;
+// 10000원권(초록빛), 5000원권(주황빛), 50000원권(황금빛) 색상 구분
+if (paidAmount >= 50000) ctx.fillStyle = "#eab308";
+else if (paidAmount >= 10000) ctx.fillStyle = "#15803d";
+else ctx.fillStyle = "#c2410c";
+
+ctx.fillRect(0, 0, 256, 128);
+ctx.strokeStyle = "#fef08a";
+ctx.lineWidth = 6;
+ctx.strokeRect(8, 8, 240, 112);
+
+ctx.fillStyle = "#ffffff";
+ctx.font = "900 38px 'Noto Sans KR', sans-serif";
+ctx.textAlign = "center";
+ctx.fillText(`${paidAmount.toLocaleString()}원`, 128, 76);
+
+this.billTexture.needsUpdate = true;
 }
-function failRound(){
-combo=0;
-timeLeft=Math.max(0,timeLeft-3);
-gameState='SCANNING';
-spawnCustomer();
+
+/**
+ * ------------------------------------------------------------------------
+ * 3-4. 7종 PX 패러디 3D 아이템 메쉬 생성기 (상표권 없는 도형/색상 조합)
+ * ------------------------------------------------------------------------
+ */
+createPxItemMesh(itemData, index) {
+const group = new THREE.Group();
+const mainMat = new THREE.MeshStandardMaterial({ color: itemData.color, roughness: 0.45 });
+const accentMat = new THREE.MeshStandardMaterial({ color: itemData.accent, roughness: 0.4 });
+
+let bodyMesh;
+if (itemData.shape === "bottle") {
+// 파란 이온음료 페트병 + 하얀 물결 띠
+bodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.42, 16), mainMat);
+const label = new THREE.Mesh(new THREE.CylinderGeometry(0.114, 0.114, 0.16, 16), accentMat);
+group.add(label);
+const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.08, 12), accentMat);
+cap.position.y = 0.24;
+group.add(cap);
+} else if (itemData.shape === "tube") {
+// 빨간 비법 고추장 튜브 + 노란 불꽃 띠
+bodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.04, 0.38, 14), mainMat);
+const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.14, 0.14), accentMat);
+group.add(stripe);
+} else if (itemData.shape === "box") {
+// 초코빵 박스
+bodyMesh = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.26), mainMat);
+const dot = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.17, 16), accentMat);
+group.add(dot);
+} else if (itemData.shape === "pouch") {
+// 국방색 냉동 닭가슴살 파우치
+bodyMesh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.1, 0.36), mainMat);
+const badge = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.11, 0.16), accentMat);
+group.add(badge);
+} else if (itemData.shape === "can") {
+// 참기름 참치캔
+bodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.14, 20), mainMat);
+const topRim = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.15, 20), accentMat);
+group.add(topRim);
+} else if (itemData.shape === "cup") {
+// 매운 컵볶음면
+bodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.26, 18), mainMat);
+const band = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.14, 0.08, 18), accentMat);
+group.add(band);
+} else {
+// 황금 달팽이크림 단지
+bodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.18, 18), mainMat);
+const goldLid = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.145, 0.06, 18), accentMat);
+goldLid.position.y = 0.1;
+group.add(goldLid);
 }
-function endGame(){
-gameState='GAMEOVER';
-alert(`근무 종료! 최종 점수: ${score.toLocaleString()}점, 콤보: ${combo}`);
-saveScore(score);
-location.reload();
+
+bodyMesh.castShadow = true;
+group.add(bodyMesh);
+
+// 컨베이어 벨트 위 배치 좌표 계산 (겹치지 않게 정렬)
+const col = index % 2;
+const row = Math.floor(index / 2);
+group.position.set(-1.5 + col * 0.65, 1.24, 0.32 + row * 0.48);
+
+// 메타데이터 저장 (드래그 판정용)
+group.userData = {
+isPxItem: true,
+itemData: itemData,
+scanned: false,
+originPos: group.position.clone()
+};
+
+this.scene.add(group);
+return group;
 }
-function openModal(id){
-document.getElementById(id).style.display='block';
-if(id==='rank-modal')renderRankings();
-}
-function closeModal(id){
-document.getElementById(id).style.display='none';
-}
-function saveScore(s){
-let ranks=JSON.parse(localStorage.getItem('px_ranks')||'[]');
-ranks.push({name:'이병(나)',score:s});
-ranks.sort((a,b)=>b.score-a.score);
-localStorage.setItem('px_ranks',JSON.stringify(ranks.slice(0,10)));
-}
-function renderRankings(){
-let ranks=JSON.parse(localStorage.getItem('px_ranks')||'[]');
-let container=document.getElementById('rank-list-container');
-container.innerHTML='';
-if(ranks.length===0){
-container.innerHTML='<p>등록된 기수 서열 기록이 없습니다.</p>';
-return;
-}
-ranks.forEach((r,idx)=>{
-let row=document.createElement('div');
-row.className='rank-row'+(r.name.includes('(나)')?' my-rank':'');
-let medal=['🥇','🥈','🥉'][idx]||`${idx+1}위`;
-row.innerHTML=`<span>${medal} ${r.name}</span><span>${r.score.toLocaleString()}점</span>`;
-container.appendChild(row);
+
+/**
+ * ------------------------------------------------------------------------
+ * 3-5. UI 버튼 및 팝업 모달 이벤트 바인딩
+ * ------------------------------------------------------------------------
+ */
+bindUIEvents() {
+// 사운드 토글
+document.getElementById("sound-toggle-btn").addEventListener("click", async () => {
+await this.sound.init();
+const isOn = this.sound.toggle();
+document.getElementById("sound-icon").textContent = isOn ? "🔊" : "🔇";
+document.getElementById("sound-label").textContent = isOn ? "효과음 ON" : "효과음 OFF";
+});
+
+// [근무 시작] -> 인트로 애니메이션 실행
+document.getElementById("btn-start-duty").addEventListener("click", async () => {
+await this.sound.init();
+this.startIntroCutscene();
+});
+
+// [근무 매뉴얼] -> 튜토리얼 모달 열기/닫기
+const manualModal = document.getElementById("modal-manual");
+document.getElementById("btn-open-manual").addEventListener("click", async () => {
+await this.sound.init();
+manualModal.classList.remove("hidden");
+});
+document.getElementById("btn-close-manual").addEventListener("click", () => manualModal.classList.add("hidden"));
+document.getElementById("btn-confirm-manual").addEventListener("click", () => manualModal.classList.add("hidden"));
+
+// [기수 서열표] -> 순위표 모달 열기/닫기
+const rankModal = document.getElementById("modal-rank");
+document.getElementById("btn-open-rank").addEventListener("click", async () => {
+await this.sound.init();
+this.renderLeaderboard();
+rankModal.classList.remove("hidden");
+});
+document.getElementById("btn-close-rank").addEventListener("click", () => rankModal.classList.add("hidden"));
+document.getElementById("btn-confirm-rank").addEventListener("click", () => rankModal.classList.add("hidden"));
+
+// 인트로 스킵 버튼
+document.getElementById("btn-skip-intro").addEventListener("click", () => {
+this.clearIntroTimers();
+this.beginActualGameplay();
+});
+
+// 거스름돈 화폐 버튼 4종
+document.querySelectorAll(".money-btn").forEach(btn => {
+btn.addEventListener("click", () => {
+if (this.currentState !== this.STATE.PAYMENT) return;
+const val = parseInt(btn.getAttribute("data-val"), 10);
+this.currentChange += val;
+this.sound.playCoin();
+document.getElementById("hud-current-change").textContent = `${this.currentChange.toLocaleString()}원`;
+});
+});
+
+// 거스름돈 다시 담기
+document.getElementById("btn-reset-change").addEventListener("click", () => {
+if (this.currentState !== this.STATE.PAYMENT) return;
+this.currentChange = 0;
+this.sound.playBeep();
+document.getElementById("hud-current-change").textContent = "0원";
+});
+
+// 거스름돈 건네기 (정답 제출)
+document.getElementById("btn-submit-change").addEventListener("click", () => {
+if (this.currentState !== this.STATE.PAYMENT) return;
+this.verifyChangeSubmission();
+});
+
+// 결과 모달 버튼들
+document.getElementById("btn-retry-game").addEventListener("click", () => {
+document.getElementById("gameover-modal").classList.add("hidden");
+this.beginActualGameplay();
+});
+document.getElementById("btn-back-cover").addEventListener("click", () => {
+document.getElementById("gameover-modal").classList.add("hidden");
+this.returnToCover();
 });
 }
+
+/**
+ * ------------------------------------------------------------------------
+ * 3-6. 3D 컨베이어 물품 마우스/터치 드래그 앤 바코드 스캔 로직
+ * ------------------------------------------------------------------------
+ */
+bind3DInteractionEvents() {
+const canvas = this.renderer.domElement;
+
+const updatePointer = (clientX, clientY) => {
+const rect = canvas.getBoundingClientRect();
+this.pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+this.pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+};
+
+const onPointerDown = (e) => {
+if (this.currentState !== this.STATE.SCANNING) return;
+const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+updatePointer(clientX, clientY);
+
+this.raycaster.setFromCamera(this.pointer, this.camera);
+// 활성 아이템들의 모든 하위 메쉬를 대상으로 충돌 검사
+const meshesToCheck = [];
+this.activeItems.forEach(g => {
+if (!g.userData.scanned) {
+g.children.forEach(c => meshesToCheck.push(c));
+}
+});
+
+const intersects = this.raycaster.intersectObjects(meshesToCheck, false);
+if (intersects.length > 0) {
+// 부모 그룹(아이템 루트) 찾기
+let targetGroup = intersects[0].object;
+while (targetGroup.parent && !targetGroup.userData.isPxItem) {
+targetGroup = targetGroup.parent;
+}
+if (targetGroup && targetGroup.userData.isPxItem) {
+this.draggedMesh = targetGroup;
+this.draggedMesh.position.y = 1.45; // 들어 올리는 시각 피드백
+const intersectPoint = new THREE.Vector3();
+this.raycaster.ray.intersectPlane(this.dragPlane, intersectPoint);
+this.dragOffset.subVectors(this.draggedMesh.position, intersectPoint);
+}
+}
+};
+
+const onPointerMove = (e) => {
+if (!this.draggedMesh || this.currentState !== this.STATE.SCANNING) return;
+if (e.cancelable) e.preventDefault();
+const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+updatePointer(clientX, clientY);
+
+this.raycaster.setFromCamera(this.pointer, this.camera);
+const intersectPoint = new THREE.Vector3();
+if (this.raycaster.ray.intersectPlane(this.dragPlane, intersectPoint)) {
+this.draggedMesh.position.x = THREE.MathUtils.clamp(intersectPoint.x + this.dragOffset.x, -2.0, 2.0);
+this.draggedMesh.position.z = THREE.MathUtils.clamp(intersectPoint.z + this.dragOffset.z, -0.3, 1.35);
+this.draggedMesh.position.y = 1.45;
+
+// 오른쪽 바코드 스캐너 영역(x > 0.55)에 진입 시 즉시 스캔 판정!
+const distToScanner = Math.hypot(
+this.draggedMesh.position.x - this.scannerPosition.x,
+this.draggedMesh.position.z - this.scannerPosition.z
+);
+if (distToScanner < 0.65) {
+this.completeItemScan(this.draggedMesh);
+this.draggedMesh = null;
+}
+}
+};
+
+const onPointerUp = () => {
+if (this.draggedMesh) {
+// 스캔되지 않은 채 놓으면 제자리로 복귀
+this.draggedMesh.position.copy(this.draggedMesh.userData.originPos);
+this.draggedMesh = null;
+}
+};
+
+canvas.addEventListener("mousedown", onPointerDown);
+window.addEventListener("mousemove", onPointerMove);
+window.addEventListener("mouseup", onPointerUp);
+
+canvas.addEventListener("touchstart", onPointerDown, { passive: false });
+window.addEventListener("touchmove", onPointerMove, { passive: false });
+window.addEventListener("touchend", onPointerUp);
+}
+
+/**
+ * 개별 물품 바코드 스캔 완료 처리
+ */
+completeItemScan(itemGroup) {
+itemGroup.userData.scanned = true;
+itemGroup.visible = false;
+this.sound.playBeep();
+
+// 스캐너 붉은 레이저 번쩍임 연출
+this.scannerGlassMat.opacity = 0.95;
+setTimeout(() => { this.scannerGlassMat.opacity = 0.35; }, 140);
+
+// 금액 합산 및 POS 모니터 갱신
+const itemPrice = itemGroup.userData.itemData.price;
+this.totalPrice += itemPrice;
+document.getElementById("hud-total-price").textContent = `${this.totalPrice.toLocaleString()}원`;
+this.updatePosMonitorScreen(this.totalPrice, `${itemGroup.userData.itemData.name} 스캔!`);
+
+// 떠오르는 가격 피드백
+this.spawnFloatingBanner(`+${itemPrice.toLocaleString()}원 (${itemGroup.userData.itemData.name})`, "text-amber-300");
+
+// 남은 물건 카운트 갱신
+const remaining = this.activeItems.filter(g => !g.userData.scanned).length;
+document.getElementById("hud-items-left").textContent = remaining;
+
+// 모든 물건 스캔 완료 시 -> 시야를 들어 군복 상체 손님과 마주하는 결제 단계로 전환!
+if (remaining === 0) {
+setTimeout(() => {
+if (this.currentState === this.STATE.SCANNING) {
+this.transitionToPaymentPhase();
+}
+}, 260);
+}
+}
+
+/**
+ * ------------------------------------------------------------------------
+ * 3-7. 약 10초 내외의 인트로 애니메이션 (얼굴 없는 전임 병장 인수인계)
+ * ------------------------------------------------------------------------
+ */
+startIntroCutscene() {
+this.currentState = this.STATE.INTRO;
+document.getElementById("cover-screen").classList.add("hidden");
+document.getElementById("intro-overlay").classList.remove("hidden");
+
+// 얼굴 없는 군복 상체 등장
+this.soldierGroup.visible = true;
+this.soldierGroup.position.set(0.25, 0, -0.85);
+this.billMesh.visible = false;
+
+// 카메라를 카운터 너머 전임 병장 상체 쪽으로 천천히 이동
+this.camTargetPos.set(0.15, 1.85, 2.35);
+this.camTargetLook.set(0.25, 1.55, -0.6);
+
+const scriptSteps = [
+{ speaker: "전임 PX병 (병장)", text: "\"야, 신병. 오늘부터 네가 이 충성마트 메인 계산병이다.\"", time: 0 },
+{ speaker: "전임 PX병 (병장)", text: "\"왼쪽 컨베이어에서 올라오는 물건들, 드래그해서 바코드부터 빨리 찍어.\"", time: 2600 },
+{ speaker: "전임 PX병 (병장)", text: "\"다 찍었으면 고개 들어서 선임들이 내미는 돈 보고 거스름돈 정확히 줘라.\"", time: 5400 },
+{ speaker: "전임 PX병 (병장)", text: "\"계산 틀리면 영창 가는 줄 알아. 자, 문 연다! 실시!\"", time: 8000 }
+];
+
+const totalDuration = 10200; // 약 10.2초
+const startTime = performance.now();
+
+scriptSteps.forEach((step, idx) => {
+const tid = setTimeout(() => {
+document.getElementById("intro-speaker").textContent = step.speaker;
+document.getElementById("intro-dialogue").textContent = step.text;
+document.getElementById("intro-step-indicator").textContent = `${idx + 1} / ${scriptSteps.length}`;
+this.sound.playDialogueTick();
+}, step.time);
+this.introTimeoutIds.push(tid);
+});
+
+const endTid = setTimeout(() => {
+this.beginActualGameplay();
+}, totalDuration);
+this.introTimeoutIds.push(endTid);
+
+// 프로그레스 바 애니메이션
+const updateBar = () => {
+if (this.currentState !== this.STATE.INTRO) return;
+const elapsed = performance.now() - startTime;
+const pct = Math.min(100, (elapsed / totalDuration) * 100);
+document.getElementById("intro-progress-bar").style.width = `${pct}%`;
+this.introAnimFrame = requestAnimationFrame(updateBar);
+};
+this.introAnimFrame = requestAnimationFrame(updateBar);
+}
+
+clearIntroTimers() {
+this.introTimeoutIds.forEach(id => clearTimeout(id));
+this.introTimeoutIds = [];
+if (this.introAnimFrame) cancelAnimationFrame(this.introAnimFrame);
+}
+
+/**
+ * ------------------------------------------------------------------------
+ * 3-8. 본 게임 시작 및 손님 라운드 생성
+ * ------------------------------------------------------------------------
+ */
+beginActualGameplay() {
+this.clearIntroTimers();
+document.getElementById("intro-overlay").classList.add("hidden");
+document.getElementById("game-hud").classList.remove("hidden");
+
+// 상태 초기화
+this.score = 0;
+this.combo = 0;
+this.maxCombo = 0;
+this.customersServed = 0;
+this.timeLeft = this.INITIAL_TIME;
+
+document.getElementById("hud-score").textContent = "0";
+document.getElementById("hud-count").textContent = "0";
+document.getElementById("hud-combo-badge").classList.add("hidden");
+
+// 타이머 시작
+if (this.timerId) clearInterval(this.timerId);
+let lastTick = performance.now();
+this.timerId = setInterval(() => {
+if (this.currentState !== this.STATE.SCANNING && this.currentState !== this.STATE.PAYMENT) return;
+const now = performance.now();
+const dt = (now - lastTick) / 1000;
+lastTick = now;
+
+this.timeLeft = Math.max(0, this.timeLeft - dt);
+this.updateTimerBarUI();
+
+if (this.timeLeft <= 0) {
+this.finishGame();
+}
+}, 50);
+
+this.spawnNextCustomerOrder();
+}
+
+updateTimerBarUI() {
+const bar = document.getElementById("hud-timer-bar");
+const txt = document.getElementById("hud-timer-text");
+const pct = Math.min(100, (this.timeLeft / this.MAX_TIME) * 100);
+bar.style.width = `${pct}%`;
+txt.textContent = `${this.timeLeft.toFixed(1)}초`;
+
+if (this.timeLeft <= 6.0) {
+bar.className = "h-full rounded-full bg-gradient-to-r from-red-600 to-rose-500";
+} else {
+bar.className = "h-full rounded-full bg-gradient-to-r from-emerald-500 via-lime-400 to-amber-400";
+}
+}
+
+/**
+ * 새로운 손님 & 컨베이어 위 1~4개 랜덤 물품 세팅 (1단계: 스캔 모드)
+ */
+spawnNextCustomerOrder() {
+this.currentState = this.STATE.SCANNING;
+
+// 이전 물건 메쉬 제거
+this.activeItems.forEach(m => this.scene.remove(m));
+this.activeItems = [];
+this.draggedMesh = null;
+
+// 금액 초기화
+this.totalPrice = 0;
+this.paidAmount = 0;
+this.targetChange = 0;
+this.currentChange = 0;
+
+// 1~4개 랜덤 물품 생성
+const itemCount = Math.floor(Math.random() * 4) + 1;
+let expectedSum = 0;
+for (let i = 0; i < itemCount; i++) {
+const randomTemplate = PX_ITEMS_CATALOG[Math.floor(Math.random() * PX_ITEMS_CATALOG.length)];
+const itemMesh = this.createPxItemMesh(randomTemplate, i);
+this.activeItems.push(itemMesh);
+expectedSum += randomTemplate.price;
+}
+
+// 손님이 낼 현실적인 지폐 금액 결정 (합계보다 큰 화폐 단위 조합)
+this.paidAmount = this.calculateRealisticPayment(expectedSum);
+this.targetChange = this.paidAmount - expectedSum;
+
+// 군복 상체 손님 대기 자세 (지폐 아직 안 내밀음)
+this.soldierGroup.visible = true;
+this.soldierGroup.position.set(0.35, 0, -0.85);
+this.billMesh.visible = false;
+this.rightArmGroup.rotation.x = 0;
+
+// 카메라 시점: 컨베이어 벨트와 바코드 스캐너를 내려다보는 구도
+this.camTargetPos.set(-0.05, 2.55, 2.45);
+this.camTargetLook.set(-0.05, 1.05, 0.45);
+
+// HUD 업데이트
+document.getElementById("hud-total-price").textContent = "0원";
+document.getElementById("hud-items-left").textContent = itemCount;
+document.getElementById("payment-info-box").classList.add("hidden");
+document.getElementById("change-panel").classList.add("hidden");
+document.getElementById("phase-guide-badge").textContent = "📦 컨베이어 물건을 오른쪽 바코드 스캐너로 드래그하세요!";
+document.getElementById("phase-guide-mobile").textContent = "📦 물건을 오른쪽 스캐너로 드래그하세요!";
+this.updatePosMonitorScreen(0, `물품 ${itemCount}개 스캔 대기`);
+}
+
+/**
+ * 물건 총액에 맞는 현실적인 지불 금액 산출 (100원 단위 거스름돈 조합 가능하도록)
+ */
+calculateRealisticPayment(sum) {
+if (sum <= 1000) return 1000;
+if (sum <= 5000) return Math.random() < 0.5 ? 5000 : 10000;
+if (sum <= 10000) return 10000;
+if (sum <= 15000) return Math.random() < 0.5 ? 15000 : 20000;
+return 20000;
+}
+
+/**
+ * 2단계 전환: 바코드 스캔 완료 -> 시야를 들어 군복 상체 손님과 마주하며 거스름돈 계산
+ */
+transitionToPaymentPhase() {
+this.currentState = this.STATE.PAYMENT;
+
+// 3D 지폐 텍스처 세팅 및 손님이 팔을 뻗어 돈을 내미는 연출
+this.updateBillTexture(this.paidAmount);
+this.billMesh.visible = true;
+this.rightArmGroup.rotation.x = -0.15;
+
+// 카메라 시야를 들어 POS 모니터와 얼굴 없는 군복 상체(내민 지폐)를 비춤!
+this.camTargetPos.set(0.05, 1.85, 2.25);
+this.camTargetLook.set(0.15, 1.45, -0.35);
+
+// POS 모니터 및 HUD 갱신
+this.updatePosMonitorScreen(this.totalPrice, `받은 돈: ${this.paidAmount.toLocaleString()}원`);
+document.getElementById("payment-info-box").classList.remove("hidden");
+document.getElementById("hud-paid-amount").textContent = `${this.paidAmount.toLocaleString()}원`;
+document.getElementById("hud-target-change").textContent = `${this.targetChange.toLocaleString()}원`;
+document.getElementById("hud-current-change").textContent = "0원";
+document.getElementById("change-panel").classList.remove("hidden");
+
+document.getElementById("phase-guide-badge").textContent = "💴 선임이 내민 돈을 확인하고 거스름돈을 맞춰 건네세요!";
+document.getElementById("phase-guide-mobile").textContent = "💴 거스름돈을 맞춰 건네세요!";
+}
+
+/**
+ * 거스름돈 제출 검증 (정답 / 오답 판정)
+ */
+verifyChangeSubmission() {
+if (this.currentChange === this.targetChange) {
+// 정답 처리!
+this.combo++;
+this.customersServed++;
+if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+
+const gainedScore = 300 + (this.combo - 1) * 75;
+this.score += gainedScore;
+
+// 3연속 완벽 처리 시 시간 보너스 +3.0초
+let bonusText = "";
+if (this.combo % 3 === 0) {
+this.timeLeft = Math.min(this.MAX_TIME, this.timeLeft + 3.0);
+bonusText = " (+3.0초 연장! ⏱️)";
+}
+
+this.sound.playSuccess(this.combo);
+this.triggerFlash("rgba(16, 185, 129, 0.28)");
+this.spawnFloatingBanner(`계산 완료! +${gainedScore}점${bonusText}`, "text-emerald-300");
+
+// HUD 갱신
+document.getElementById("hud-score").textContent = this.score.toLocaleString();
+document.getElementById("hud-count").textContent = this.customersServed;
+const comboBadge = document.getElementById("hud-combo-badge");
+if (this.combo >= 2) {
+comboBadge.classList.remove("hidden");
+document.getElementById("hud-combo").textContent = this.combo;
+}
+
+// 다음 손님 즉시 입장
+this.spawnNextCustomerOrder();
+} else {
+// 오답 처리!
+this.combo = 0;
+this.timeLeft = Math.max(0, this.timeLeft - 2.5);
+this.updateTimerBarUI();
+
+this.sound.playError();
+this.triggerFlash("rgba(239, 68, 68, 0.35)");
+document.body.classList.remove("shake-active");
+void document.body.offsetWidth;
+document.body.classList.add("shake-active");
+
+document.getElementById("hud-combo-badge").classList.add("hidden");
+this.spawnFloatingBanner(`거스름돈 오차! (-2.5초) 정답: ${this.targetChange.toLocaleString()}원`, "text-rose-400");
+
+// 현재 담은 거스름돈만 초기화하여 다시 맞추게 함
+this.currentChange = 0;
+document.getElementById("hud-current-change").textContent = "0원";
+}
+}
+
+/**
+ * ------------------------------------------------------------------------
+ * 3-9. 게임 종료 및 기수 서열표 업데이트
+ * ------------------------------------------------------------------------
+ */
+finishGame() {
+this.currentState = this.STATE.GAMEOVER;
+clearInterval(this.timerId);
+this.sound.playError();
+
+document.getElementById("game-hud").classList.add("hidden");
+document.getElementById("gameover-modal").classList.remove("hidden");
+
+// 평가 멘트 및 계급 부여
+let evalMsg = "\"선임들한테 한 소리 좀 듣겠는데? 매뉴얼 다시 읽어라!\"";
+let myRankTitle = "이병";
+if (this.score >= 15000) {
+evalMsg = "\"전설의 PX병 강림! 행보관님이 포상휴가증 써주신다!\"";
+myRankTitle = "병장";
+} else if (this.score >= 9000) {
+evalMsg = "\"손놀림이 예사롭지 않다! 에이스 PX병 인정!\"";
+myRankTitle = "상병";
+} else if (this.score >= 4500) {
+evalMsg = "\"무난하게 일과를 마쳤다. 내일은 더 빠르게 움직이자!\"";
+myRankTitle = "일병";
+}
+
+document.getElementById("gameover-eval-msg").textContent = evalMsg;
+document.getElementById("res-score").textContent = `${this.score.toLocaleString()}점`;
+document.getElementById("res-customers").textContent = `${this.customersServed}명`;
+document.getElementById("res-max-combo").textContent = `${this.maxCombo}콤보`;
+
+// 기존 내 기록 제거 후 새 기록 반영하여 서열표 정렬
+this.leaderboard = this.leaderboard.filter(item => !item.isMe);
+const prevTop = this.leaderboard[0] ? this.leaderboard[0].score : 0;
+const isNewRecord = this.score > prevTop;
+
+document.getElementById("new-record-tag").classList.toggle("hidden", !isNewRecord);
+
+this.leaderboard.push({
+rankName: myRankTitle,
+name: "나 (신규 PX병)",
+score: this.score,
+isMe: true
+});
+this.leaderboard.sort((a, b) => b.score - a.score);
+}
+
+/**
+ * 기수 서열표 모달 리스트 렌더링 (TOP 3 메달 + 내 순위 청색 하이라이트)
+ */
+renderLeaderboard() {
+const container = document.getElementById("rank-list-container");
+container.innerHTML = "";
+
+this.leaderboard.forEach((entry, idx) => {
+const rankNum = idx + 1;
+let medalIcon = `<span class="font-bold text-stone-400 w-6 text-center">${rankNum}</span>`;
+if (rankNum === 1) medalIcon = `<span class="text-xl w-6 text-center">🥇</span>`;
+else if (rankNum === 2) medalIcon = `<span class="text-xl w-6 text-center">🥈</span>`;
+else if (rankNum === 3) medalIcon = `<span class="text-xl w-6 text-center">🥉</span>`;
+
+// 내 기록일 경우 청색 계열 강조 및 파란색 '나' 태그 표시
+const rowStyle = entry.isMe
+? "bg-sky-950/90 border-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.3)]"
+: "bg-stone-950/80 border-stone-700";
+
+const meBadge = entry.isMe
+? `<span class="ml-1.5 px-1.5 py-0.5 bg-sky-500/20 border border-sky-400 text-sky-300 text-[11px] font-black rounded">나</span>`
+: "";
+
+const rowEl = document.createElement("div");
+rowEl.className = `flex items-center justify-between p-3 rounded-xl border ${rowStyle}`;
+rowEl.innerHTML = `
+<div class="flex items-center gap-2.5">
+${medalIcon}
+<span class="px-2 py-0.5 bg-stone-800 border border-stone-600 text-stone-300 text-xs font-bold rounded">${entry.rankName}</span>
+<span class="font-bold text-stone-100 text-sm sm:text-base">${entry.name}${meBadge}</span>
+</div>
+<span class="font-sub text-lg sm:text-xl ${entry.isMe ? "text-sky-300" : "text-amber-400"}">${entry.score.toLocaleString()}점</span>
+`;
+container.appendChild(rowEl);
+});
+}
+
+/**
+ * 표지 화면으로 복귀
+ */
+returnToCover() {
+this.currentState = this.STATE.COVER;
+this.activeItems.forEach(m => this.scene.remove(m));
+this.activeItems = [];
+this.soldierGroup.visible = false;
+this.camTargetPos.set(0, 2.35, 3.6);
+this.camTargetLook.set(0, 1.35, 0);
+this.updatePosMonitorScreen(7400, "근무 대기 중");
+document.getElementById("cover-screen").classList.remove("hidden");
+}
+
+/**
+ * 시각 피드백 헬퍼 (화면 반짝임 및 떠오르는 알림 배너)
+ */
+triggerFlash(rgbaColor) {
+const flash = document.getElementById("flash-overlay");
+flash.style.backgroundColor = rgbaColor;
+flash.style.opacity = "1";
+setTimeout(() => { flash.style.opacity = "0"; }, 140);
+}
+
+spawnFloatingBanner(text, colorClass) {
+const el = document.createElement("div");
+el.className = `float-anim font-sub text-xl sm:text-2xl font-bold drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] ${colorClass}`;
+el.textContent = text;
+el.style.left = "50%";
+el.style.top = "38%";
+el.style.transform = "translateX(-50%)";
+document.body.appendChild(el);
+setTimeout(() => el.remove(), 800);
+}
+
+/**
+ * ------------------------------------------------------------------------
+ * 3-10. 메인 3D 렌더링 & 카메라 보간 루프
+ * ------------------------------------------------------------------------
+ */
+animate() {
+requestAnimationFrame(this.animate);
+
+const now = performance.now();
+const dt = (now - this.lastFrameTime) / 1000;
+this.lastFrameTime = now;
+
+// 부드러운 카메라 이동 및 시선 추적 (1단계 컨베이어 뷰 <-> 2단계 손님 결제 뷰)
+this.camera.position.lerp(this.camTargetPos, Math.min(1, dt * 6.5));
+this.camCurrentLook.lerp(this.camTargetLook, Math.min(1, dt * 6.5));
+this.camera.lookAt(this.camCurrentLook);
+
+// 얼굴 없는 군복 상체 미세 호흡 애니메이션
+if (this.soldierGroup && this.soldierGroup.visible) {
+this.soldierGroup.position.y = Math.sin(now * 0.003) * 0.015;
+}
+
+// 컨베이어 위 미스캔 물품 살짝 흔들림 연출
+if (this.currentState === this.STATE.SCANNING) {
+this.activeItems.forEach((item, idx) => {
+if (!item.userData.scanned && item !== this.draggedMesh) {
+item.rotation.y = Math.sin(now * 0.0025 + idx) * 0.12;
+}
+});
+}
+
+this.renderer.render(this.scene, this.camera);
+}
+}
+
+// 페이지 로드 완료 시 3D 게임 인스턴스 시작
+window.onload = function () {
+window.pxGame = new PxSoldier3DGame();
+};
 </script>
 </body>
 </html>
+```
