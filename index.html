@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>보직 이동 PX병</title>
+<style>
+body{margin:0;overflow:hidden;background:#0b0b0f;font-family:'Malgun Gothic',sans-serif;user-select:none;}
+#cover-screen{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(rgba(0,0,0,0.6),rgba(0,0,0,0.8)),url('15925.png') no-repeat center center/cover;display:flex;flex-direction:column;justify-content:flex-end;padding:50px;box-sizing:border-box;z-index:100;}
+.cover-title-area{margin-bottom:40px;}
+.cover-subtitle{color:#a0a0a0;font-size:1.2rem;font-weight:bold;margin-bottom:5px;text-shadow:1px 1px 2px rgba(0,0,0,0.8);}
+.cover-title{color:#e2d8c3;font-size:4rem;font-weight:900;text-shadow:3px 3px 6px rgba(0,0,0,0.9);letter-spacing:2px;}
+.cover-menu{display:flex;flex-direction:column;gap:15px;width:320px;align-self:flex-end;}
+.menu-btn{background:linear-gradient(135deg,#3a4a3a,#232d23);color:#e2d8c3;border:2px solid #556b2f;padding:15px 25px;font-size:1.2rem;font-weight:bold;text-align:left;cursor:pointer;border-radius:4px;box-shadow:0 4px 10px rgba(0,0,0,0.6);display:flex;align-items:center;gap:15px;transition:all 0.2s;}
+.menu-btn:hover{background:linear-gradient(135deg,#4d634d,#2e3b2e);transform:translateX(-5px);border-color:#8fbc8f;}
+#game-container{position:absolute;top:0;left:0;width:100%;height:100%;display:none;z-index:10;}
+#ui-hud{position:absolute;top:20px;left:20px;right:20px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:20;}
+.hud-box{background:rgba(20,20,25,0.85);border:2px solid #556b2f;padding:12px 25px;border-radius:8px;color:#fff;font-size:1.3rem;font-weight:bold;box-shadow:0 4px 15px rgba(0,0,0,0.5);}
+#intro-overlay{position:absolute;top:0;left:0;width:100%;height:100%;background:#000;display:none;flex-direction:column;justify-content:center;align-items:center;z-index:50;color:#fff;text-align:center;}
+.intro-text{font-size:2rem;font-weight:bold;margin-bottom:20px;opacity:0;transition:opacity 1s ease;}
+#interaction-panel{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:none;flex-direction:column;align-items:center;gap:15px;background:rgba(25,25,35,0.95);border:3px solid #4a5d4e;padding:25px;border-radius:12px;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,0.8);width:600px;}
+.panel-title{color:#e2d8c3;font-size:1.2rem;font-weight:bold;}
+.item-scan-box{display:flex;gap:10px;min-height:80px;align-items:center;justify-content:center;}
+.scannable-item{background:#2d3748;border:2px solid #718096;padding:10px 15px;border-radius:6px;color:#fff;cursor:pointer;font-weight:bold;transition:all 0.2s;}
+.scannable-item.scanned{background:#2f855a;border-color:#48bb78;text-decoration:line-through;opacity:0.6;}
+.change-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;}
+.change-btn{background:#3182ce;color:#white;border:none;padding:12px;font-size:1.1rem;font-weight:bold;border-radius:6px;cursor:pointer;transition:background 0.2s;}
+.change-btn:hover{background:#2b6cb0;}
+.modal{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#181822;border:3px solid #556b2f;width:600px;max-height:80vh;padding:30px;border-radius:10px;display:none;z-index:200;box-shadow:0 10px 40px rgba(0,0,0,0.9);color:#e2d8c3;box-sizing:border-box;overflow-y:auto;}
+.modal h2{margin-top:0;border-bottom:2px solid #556b2f;padding-bottom:10px;}
+.close-btn{background:#c53030;color:#fff;border:none;padding:8px 15px;font-weight:bold;border-radius:4px;cursor:pointer;float:right;}
+.rank-row{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #2d3748;}
+.rank-row.my-rank{background:rgba(49,130,206,0.3);border:1px solid #3182ce;font-weight:bold;}
+</style>
+</head>
+<body>
+<div id="cover-screen">
+<div class="cover-title-area">
+<div class="cover-subtitle">보직 이동</div>
+<div class="cover-title">PX병</div>
+</div>
+<div class="cover-menu">
+<button class="menu-btn" onclick="startIntro()">▶ 근무 시작</button>
+<button class="menu-btn" onclick="openModal('manual-modal')">📖 근무 매뉴얼</button>
+<button class="menu-btn" onclick="openModal('rank-modal')">🏆 기수 서열표</button>
+</div>
+</div>
+<div id="intro-overlay">
+<div id="intro-msg-1" class="intro-text">주말 오전, 지옥의 PX 오픈 직전...</div>
+<div id="intro-msg-2" class="intro-text">복도 끝에서 선임들의 군화 소리가 들려온다.</div>
+<div id="intro-msg-3" class="intro-text">정신 바짝 차려라, 근무 시작한다!</div>
+</div>
+<div id="game-container"></div>
+<div id="ui-hud">
+<div class="hud-box" id="hud-score">점수: 0점</div>
+<div class="hud-box" id="hud-combo">콤보: 0 COMBO</div>
+<div class="hud-box" id="hud-timer">남은 시간: 30.0초</div>
+</div>
+<div id="interaction-panel">
+<div class="panel-title" id="panel-instruction">1단계: 컨베이어 물건을 드래그(클릭)하여 바코드를 찍으세요!</div>
+<div class="item-scan-box" id="item-scan-box"></div>
+<div id="change-calc-area" style="display:none;width:100%;">
+<div style="margin-bottom:10px;text-align:center;font-weight:bold;" id="calc-status">지불 금액: <span id="pay-amount">10,000원</span> / 거스름돈: <span id="change-target">0원</span></div>
+<div style="margin-bottom:10px;text-align:center;color:#63b3ed;" id="current-given">투입한 잔돈: <span id="current-given-val">0원</span></div>
+<div class="change-buttons">
+<button class="change-btn" onclick="addChange(5000)">5,000원</button>
+<button class="change-btn" onclick="addChange(1000)">1,000원</button>
+<button class="change-btn" onclick="addChange(500)">500원</button>
+<button class="change-btn" onclick="addChange(100)">100원</button>
+</div>
+</div>
+</div>
+<div id="manual-modal" class="modal">
+<button class="close-btn" onclick="closeModal('manual-modal')">닫기</px>
+<h2>근무 매뉴얼</h2>
+<p>1. <strong>바코드 스캔:</strong> 왼쪽 컨베이어에서 밀려오는 1~4개의 패러디 물건들을 순서대로 클릭(스캔)하세요.</p>
+<p>2. <strong>거스름돈 계산:</strong> 계산기에 총금액이 뜨면 군복 상체가 내미는 돈을 확인하고 정확한 거스름돈 버튼을 조합해 누르세요.</p>
+<p>3. <strong>콤보 및 보너스:</strong> 정답을 맞힐 때마다 콤보가 쌓이며 점수가 급상승하고, <strong>5콤보마다 제한 시간이 +1.5초</strong> 추가됩니다!</p>
+</div>
+<div id="rank-modal" class="modal">
+<button class="close-btn" onclick="closeModal('rank-modal')">닫기</button>
+<h2>기수 서열표 (순위표)</h2>
+<div id="rank-list-container"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const itemsData=[
+{name:"블루 웨이브",price:1200,color:0x3182ce},
+{name:"매운 고추장 튜브",price:2000,color:0xe53e3e},
+{name:"슈퍼 초코 파이",price:600,color:0x744210},
+{name:"냉동 닭가슴살",price:3500,color:0x4a5568},
+{name:"참기름 참치 캔",price:1800,color:0xd69e2e},
+{name:"치즈 불닭 볶음면",price:1500,color:0xdd6b20},
+{name:"황금 달팽이 크림",price:5000,color:0xb7791f)
+];
+let scene,camera,renderer;
+let gameState='COVER';
+let score=0,combo=0,timeLeft=30.0;
+let currentItems=[],scannedCount=0, totalPrice=0, paidAmount=0, currentGiven=0;
+let soldierMesh,conveyorBelt;
+function init3D(){
+const container=document.getElementById('game-container');
+scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0f0f15);
+camera=new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+camera.position.set(0,3,5);
+camera.lookAt(0,1,0);
+renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.shadowMap.enabled=true;
+container.appendChild(renderer.domElement);
+const ambientLight=new THREE.AmbientLight(0xffffff,0.7);
+scene.add(ambientLight);
+const dirLight=new THREE.DirectionalLight(0xffffff,0.8);
+dirLight.position.set(5,10,5);
+dirLight.castShadow=true;
+scene.add(dirLight);
+const counterGeo=new THREE.BoxGeometry(6,2,2);
+const counterMat=new THREE.MeshStandardMaterial({color:0x2d3748});
+const counter=new THREE.Mesh(counterGeo,counterMat);
+counter.position.set(0,-1,0);
+scene.add(counter);
+const scannerGeo=new THREE.BoxGeometry(0.8,0.6,1);
+const scannerMat=new THREE.MeshStandardMaterial({color:0x1a202c});
+const scanner=new THREE.Mesh(scannerGeo,scannerMat);
+scanner.position.set(1.5,0.1,0);
+scene.add(scanner);
+const soldierGeo=new THREE.BoxGeometry(1.8,2,0.8);
+const soldierMat=new THREE.MeshStandardMaterial({color:0x3f6212});
+soldierMesh=new THREE.Mesh(soldierGeo,soldierMat);
+soldierMesh.position.set(0,1,-2);
+scene.add(soldierMesh);
+window.addEventListener('resize',onWindowResize);
+}
+function onWindowResize(){
+camera.aspect=window.innerWidth/window.innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(window.innerWidth,window.innerHeight);
+}
+function startIntro(){
+document.getElementById('cover-screen').style.display='none';
+const intro=document.getElementById('intro-overlay');
+intro.style.display='flex';
+setTimeout(()=>{document.getElementById('intro-msg-1').style.opacity=1;},500);
+setTimeout(()=>{document.getElementById('intro-msg-1').style.opacity=0;document.getElementById('intro-msg-2').style.opacity=1;},3500);
+setTimeout(()=>{document.getElementById('intro-msg-2').style.opacity=0;document.getElementById('intro-msg-3').style.opacity=1;},6500);
+setTimeout(()=>{
+intro.style.display='none';
+document.getElementById('game-container').style.display='block';
+document.getElementById('ui-hud').style.display='flex';
+document.getElementById('interaction-panel').style.display='flex';
+init3D();
+startGameLoop();
+},9500);
+}
+function startGameLoop(){
+gameState='SCANNING';
+spawnCustomer();
+let lastTime=performance.now();
+function loop(now){
+if(gameState==='GAMEOVER')return;
+let dt=(now-lastTime)/1000;
+lastTime=now;
+timeLeft-=dt;
+if(timeLeft<=0){
+timeLeft=0;
+endGame();
+}
+updateHUD();
+renderer.render(scene,camera);
+requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+}
+function updateHUD(){
+document.getElementById('hud-score').innerText=`점수: ${score.toLocaleString()}점`;
+document.getElementById('hud-combo').innerText=`콤보: ${combo} COMBO`;
+document.getElementById('hud-timer').innerText=`남은 시간: ${timeLeft.toFixed(1)}초`;
+}
+function spawnCustomer(){
+scannedCount=0;
+totalPrice=0;
+currentGiven=0;
+const count=Math.floor(Math.random()*4)+1;
+currentItems=[];
+for(let i=0;i<count;i++){
+let item=itemsData[Math.floor(Math.random()*itemsData.length)];
+currentItems.push(item);
+totalPrice+=item.price;
+}
+const denomList=[5000,10000,20000,50000];
+paidAmount=totalPrice+denomList[Math.floor(Math.random()*denomList.length)];
+if(paidAmount<totalPrice)paidAmount=totalPrice+5000;
+renderScanUI();
+}
+function renderScanUI(){
+document.getElementById('panel-instruction').innerText="1단계: 컨베이어 물건을 클릭하여 바코드를 찍으세요!";
+document.getElementById('change-calc-area').style.display='none';
+const box=document.getElementById('item-scan-box');
+box.innerHTML='';
+currentItems.forEach((item,idx)=>{
+let btn=document.createElement('div');
+btn.className='scannable-item';
+btn.innerText=`${item.name} (${item.price.toLocaleString()}원)`;
+btn.onclick=()=>scanItem(idx,btn);
+box.appendChild(btn);
+});
+}
+function scanItem(idx,btn){
+if(btn.classList.contains('scanned'))return;
+btn.classList.add('scanned');
+scannedCount++;
+if(scannedCount===currentItems.length){
+setTimeout(startChangePhase,400);
+}
+}
+function startChangePhase(){
+gameState='CHANGE';
+document.getElementById('panel-instruction').innerText="2단계: 군복 선임이 내민 돈의 거스름돈을 계산하세요!";
+document.getElementById('item-scan-box').innerHTML=`총 금액: <b>${totalPrice.toLocaleString()}원</b>`;
+document.getElementById('change-calc-area').style.display='block';
+document.getElementById('pay-amount').innerText=`${paidAmount.toLocaleString()}원`;
+document.getElementById('change-target').innerText=`${(paidAmount-totalPrice).toLocaleString()}원`;
+document.getElementById('current-given-val').innerText=`0원`;
+currentGiven=0;
+}
+function addChange(amt){
+currentGiven+=amt;
+document.getElementById('current-given-val').innerText=`${currentGiven.toLocaleString()}원`;
+let targetChange=paidAmount-totalPrice;
+if(currentGiven===targetChange){
+successRound();
+}else if(currentGiven>targetChange){
+failRound();
+}
+}
+function successRound(){
+combo++;
+let addedScore=100+(combo-1)*15;
+score+=addedScore;
+if(combo%5===0){
+timeLeft+=1.5;
+if(timeLeft>30)timeLeft=30;
+}
+gameState='SCANNING';
+spawnCustomer();
+}
+function failRound(){
+combo=0;
+timeLeft=Math.max(0,timeLeft-3);
+gameState='SCANNING';
+spawnCustomer();
+}
+function endGame(){
+gameState='GAMEOVER';
+alert(`근무 종료! 최종 점수: ${score.toLocaleString()}점, 콤보: ${combo}`);
+saveScore(score);
+location.reload();
+}
+function openModal(id){
+document.getElementById(id).style.display='block';
+if(id==='rank-modal')renderRankings();
+}
+function closeModal(id){
+document.getElementById(id).style.display='none';
+}
+function saveScore(s){
+let ranks=JSON.parse(localStorage.getItem('px_ranks')||'[]');
+ranks.push({name:'이병(나)',score:s});
+ranks.sort((a,b)=>b.score-a.score);
+localStorage.setItem('px_ranks',JSON.stringify(ranks.slice(0,10)));
+}
+function renderRankings(){
+let ranks=JSON.parse(localStorage.getItem('px_ranks')||'[]');
+let container=document.getElementById('rank-list-container');
+container.innerHTML='';
+if(ranks.length===0){
+container.innerHTML='<p>등록된 기수 서열 기록이 없습니다.</p>';
+return;
+}
+ranks.forEach((r,idx)=>{
+let row=document.createElement('div');
+row.className='rank-row'+(r.name.includes('(나)')?' my-rank':'');
+let medal=['🥇','🥈','🥉'][idx]||`${idx+1}위`;
+row.innerHTML=`<span>${medal} ${r.name}</span><span>${r.score.toLocaleString()}점</span>`;
+container.appendChild(row);
+});
+}
+</script>
+</body>
+</html>
