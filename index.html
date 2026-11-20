@@ -113,33 +113,112 @@ padding-bottom: 6px !important;
 body.mobile-mode #cover-screen .px-menu-btn span {
 font-size: 1.1rem !important;
 }
+body.mobile-mode .key-badge {
+display: none !important;
+}
 body.mobile-mode #game-hud {
-padding: 6px max(12px, env(safe-area-inset-right)) 6px max(12px, env(safe-area-inset-left)) !important;
+padding: 4px max(12px, env(safe-area-inset-right)) 4px max(12px, env(safe-area-inset-left)) !important;
+}
+body.mobile-mode #game-hud > div:first-child {
+gap: 3px !important;
+}
+body.mobile-mode #game-hud > div:first-child > div:first-child {
+padding: 2px 10px !important;
+border-radius: 8px !important;
+min-height: 0 !important;
+}
+body.mobile-mode #game-hud > div:first-child > div:first-child > div:first-child > div:first-child,
+body.mobile-mode #game-hud > div:first-child > div:first-child > div:last-child {
+display: flex !important;
+align-items: baseline !important;
+gap: 5px !important;
+}
+body.mobile-mode #game-hud > div:first-child > div:first-child > div:first-child > div:first-child > div:first-child,
+body.mobile-mode #game-hud > div:first-child > div:first-child > div:last-child > div:first-child {
+font-size: 10px !important;
+line-height: 1 !important;
+}
+body.mobile-mode #hud-count,
+body.mobile-mode #hud-score {
+font-size: 0.95rem !important;
+line-height: 1 !important;
+}
+body.mobile-mode #hud-combo-badge {
+font-size: 0.75rem !important;
+padding: 1px 6px !important;
+}
+body.mobile-mode #phase-guide-badge {
+font-size: 0.7rem !important;
+padding: 2px 10px !important;
+}
+body.mobile-mode #hud-timer-bar {
+border-radius: 9999px !important;
+}
+body.mobile-mode #game-hud .h-4 {
+height: 0.75rem !important;
+}
+body.mobile-mode #hud-timer-text {
+font-size: 9px !important;
+}
+body.mobile-mode #pos-status-card {
+min-width: 112px !important;
+padding: 6px 10px !important;
+border-radius: 10px !important;
+}
+body.mobile-mode #hud-total-price {
+font-size: 1.2rem !important;
+line-height: 1.15 !important;
+}
+body.mobile-mode #hud-paid-amount {
+font-size: 1.05rem !important;
+line-height: 1.15 !important;
 }
 body.mobile-mode #change-panel {
 position: fixed;
-right: max(12px, env(safe-area-inset-right));
-bottom: 8px;
-width: 270px !important;
-max-width: 46vw !important;
-padding: 8px 10px !important;
+right: max(10px, env(safe-area-inset-right));
+bottom: 6px;
+width: 215px !important;
+max-width: 42vw !important;
+padding: 6px 8px !important;
 margin: 0 !important;
+border-radius: 12px !important;
+transform: scale(0.75);
+transform-origin: bottom right;
 z-index: 25;
 }
+body.mobile-mode #change-panel > div:first-child {
+margin-bottom: 5px !important;
+padding-bottom: 4px !important;
+}
+body.mobile-mode #change-panel > div:first-child > div:first-child {
+display: none !important;
+}
+body.mobile-mode #change-panel > div:first-child > div:last-child {
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+body.mobile-mode #hud-current-change {
+font-size: 1.15rem !important;
+}
 body.mobile-mode #change-panel .money-btn {
-padding-top: 6px !important;
-padding-bottom: 6px !important;
-font-size: 0.85rem !important;
+padding-top: 5px !important;
+padding-bottom: 5px !important;
+font-size: 0.8rem !important;
+border-radius: 8px !important;
 }
 body.mobile-mode #change-panel .grid-cols-4 {
 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-gap: 6px !important;
+gap: 5px !important;
+margin-bottom: 5px !important;
 }
 body.mobile-mode #btn-reset-change,
 body.mobile-mode #btn-submit-change {
-padding-top: 6px !important;
-padding-bottom: 6px !important;
-font-size: 0.9rem !important;
+padding-top: 5px !important;
+padding-bottom: 5px !important;
+font-size: 0.78rem !important;
+border-radius: 8px !important;
 }
 body.mobile-mode #gameover-modal > div {
 max-height: 92dvh;
@@ -148,6 +227,10 @@ padding: 14px !important;
 }
 body.mobile-mode #intro-overlay {
 padding: 10px max(16px, env(safe-area-inset-right)) 10px max(16px, env(safe-area-inset-left)) !important;
+}
+body.mobile-mode #intro-overlay > div:last-child {
+transform: scale(0.75);
+transform-origin: bottom center;
 }
 @keyframes shakeScreen {
 0%, 100% { transform: translate(0, 0); }
@@ -392,17 +475,17 @@ REC | PX 보직 인수인계 중
 </div>
 
 <div class="grid grid-cols-4 gap-2 mb-2">
-<button type="button" data-val="5000" class="money-btn bg-gradient-to-b from-amber-700 to-amber-900 border border-amber-400 text-amber-100 rounded-xl py-2 sm:py-2.5 font-sub text-sm sm:text-xl cursor-pointer">
-+5,000원
+<button type="button" data-val="5000" class="money-btn relative bg-gradient-to-b from-amber-700 to-amber-900 border border-amber-400 text-amber-100 rounded-xl py-2 sm:py-2.5 font-sub text-sm sm:text-xl cursor-pointer">
+<span class="key-badge absolute top-1 left-1.5 text-[10px] font-sans font-bold opacity-80 leading-none">Q</span>+5,000원
 </button>
-<button type="button" data-val="1000" class="money-btn bg-gradient-to-b from-sky-700 to-sky-900 border border-sky-400 text-sky-100 rounded-xl py-2 sm:py-2.5 font-sub text-sm sm:text-xl cursor-pointer">
-+1,000원
+<button type="button" data-val="1000" class="money-btn relative bg-gradient-to-b from-sky-700 to-sky-900 border border-sky-400 text-sky-100 rounded-xl py-2 sm:py-2.5 font-sub text-sm sm:text-xl cursor-pointer">
+<span class="key-badge absolute top-1 left-1.5 text-[10px] font-sans font-bold opacity-80 leading-none">W</span>+1,000원
 </button>
-<button type="button" data-val="500" class="money-btn bg-gradient-to-b from-stone-500 to-stone-700 border border-stone-300 text-white rounded-xl py-2 sm:py-2.5 font-sub text-sm sm:text-xl cursor-pointer">
-+500원
+<button type="button" data-val="500" class="money-btn relative bg-gradient-to-b from-stone-500 to-stone-700 border border-stone-300 text-white rounded-xl py-2 sm:py-2.5 font-sub text-sm sm:text-xl cursor-pointer">
+<span class="key-badge absolute top-1 left-1.5 text-[10px] font-sans font-bold opacity-80 leading-none">E</span>+500원
 </button>
-<button type="button" data-val="100" class="money-btn bg-gradient-to-b from-zinc-600 to-zinc-800 border border-zinc-400 text-zinc-100 rounded-xl py-2 sm:py-2.5 font-sub text-sm sm:text-xl cursor-pointer">
-+100원
+<button type="button" data-val="100" class="money-btn relative bg-gradient-to-b from-zinc-600 to-zinc-800 border border-zinc-400 text-zinc-100 rounded-xl py-2 sm:py-2.5 font-sub text-sm sm:text-xl cursor-pointer">
+<span class="key-badge absolute top-1 left-1.5 text-[10px] font-sans font-bold opacity-80 leading-none">R</span>+100원
 </button>
 </div>
 
@@ -436,7 +519,7 @@ REC | PX 보직 인수인계 중
 <div class="bg-stone-950/80 border border-stone-700 rounded-xl p-3.5">
 <div class="font-bold text-emerald-400 mb-1">2단계: 선임 지불 금액 확인 및 거스름돈 지급</div>
 <p class="text-stone-300 text-xs sm:text-sm">
-스캔이 끝나면 카메라가 올라가며 장병 손님이 내민 지폐를 확인합니다. 좌측에 표시된 POS 계산 합계와 손님이 낸 돈을 직접 암산하여, 하단의 +5,000원, +1,000원, +500원, +100원 버튼으로 정확히 거슬러 주세요.
+스캔이 끝나면 카메라가 올라가며 장병 손님이 내민 지폐를 확인합니다. 좌측에 표시된 POS 계산 합계와 손님이 낸 돈을 직접 암산하여, 하단의 +5,000원(Q), +1,000원(W), +500원(E), +100원(R) 버튼 또는 키보드 Q/W/E/R 키로 정확히 거슬러 주세요.
 </p>
 </div>
 <div class="bg-stone-950/80 border border-stone-700 rounded-xl p-3.5 space-y-1 text-xs sm:text-sm text-stone-300">
@@ -1525,14 +1608,28 @@ this.clearIntroTimers();
 this.beginActualGameplay();
 });
 
-document.querySelectorAll(".money-btn").forEach(btn => {
-btn.addEventListener("click", () => {
-if (this.currentState !== this.STATE.PAYMENT) return;
-const val = parseInt(btn.getAttribute("data-val"), 10);
+this.addChangeAmount = (val) => {
+if (this.currentState !== this.STATE.PAYMENT || this.isPortraitBlocked) return;
 this.currentChange += val;
 this.sound.playCoin();
 document.getElementById("hud-current-change").textContent = `${this.currentChange.toLocaleString()}원`;
+};
+
+document.querySelectorAll(".money-btn").forEach(btn => {
+btn.addEventListener("click", () => {
+const val = parseInt(btn.getAttribute("data-val"), 10);
+this.addChangeAmount(val);
 });
+});
+
+window.addEventListener("keydown", (e) => {
+if (e.repeat) return;
+const tag = e.target && e.target.tagName;
+if (tag === "INPUT" || tag === "TEXTAREA") return;
+if (e.code === "KeyQ") this.addChangeAmount(5000);
+else if (e.code === "KeyW") this.addChangeAmount(1000);
+else if (e.code === "KeyE") this.addChangeAmount(500);
+else if (e.code === "KeyR") this.addChangeAmount(100);
 });
 
 document.getElementById("btn-reset-change").addEventListener("click", () => {
